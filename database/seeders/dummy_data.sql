@@ -3,12 +3,12 @@
 -- ============================================
 
 -- 1. INSERT INTO PEGAWAI (5 records)
-INSERT INTO pegawai (nip, nama, tempat_lahir, tanggal_lahir, tmt_cpns, tmt_pangkat, pangkat, golongan, nama_jabatan, tmt_jabatan, unit_kerja, pendidikan_terakhir, jurusan, tempat_pendidikan, tahun_lulus, masa_kerja_tahun, masa_kerja_bulan, latihan_jabatan, perkiraan_pensiun, status_kepegawaian, status, created_at, updated_at) VALUES
-('197803152005011001', 'Dr. Bambang Sutrisno', 'Jakarta', '1978-03-15', '2005-01-15', '2020-04-01', 'Pembina Tingkat I', 'IV/b', 'Kepala Biro', '2022-01-01', 'Biro Administrasi', 'S3', 'Administrasi Publik', 'Universitas Indonesia', 2003, 19, 0, 'Diklat Kepemimpinan Tingkat II', 2033, 'PNS', 'aktif', NOW(), NOW()),
-('198204201988032001', 'Ir. Siti Nurhaliza', 'Bandung', '1982-04-20', '1988-03-20', '2018-07-15', 'Pembina', 'IV/a', 'Kepala Bidang', '2021-06-01', 'Bidang Program dan Evaluasi', 'S2', 'Teknik Sipil', 'ITB Bandung', 2006, 18, 6, 'Diklat Kepemimpinan Tingkat III', 2032, 'PNS', 'aktif', NOW(), NOW()),
-('198501152010011001', 'Budi Santoso, S.Kom', 'Surabaya', '1985-01-15', '2010-01-15', '2021-03-01', 'Penata', 'III/d', 'Staff', '2020-01-01', 'Bidang IT', 'S1', 'Teknik Informatika', 'Universitas Surabaya', 2007, 14, 0, 'Diklat Fungsional IT', 2027, 'PNS', 'aktif', NOW(), NOW()),
-('198703102015021002', 'Eka Putri Wijaya', 'Yogyakarta', '1987-03-10', '2015-02-01', '2022-08-01', 'Penata Muda', 'III/b', 'Analis', '2019-06-01', 'Bidang Perencanaan', 'S1', 'Perencanaan Pembangunan', 'UGM', 2009, 9, 4, 'Diklat Analis Kebijakan', 2024, 'PPPK', 'aktif', NOW(), NOW()),
-('199012251920023003', 'Muhammad Rizki Pratama', 'Medan', '1990-12-25', '2019-12-15', '2024-01-01', 'Penata Muda Tingkat I', 'III/c', 'Operator', '2022-03-01', 'Bidang Administrasi Data', 'S1', 'Administrasi Negara', 'Universitas Sumatera Utara', 2012, 4, 1, 'Diklat Operator Data', 2025, 'PPPK', 'aktif', NOW(), NOW());
+INSERT INTO pegawai (nip, nama, tempat_lahir, tanggal_lahir, tmt_cpns, tmt_pangkat, pangkat, golongan, nama_jabatan, tmt_jabatan, pendidikan_terakhir, jurusan, tempat_pendidikan, tahun_lulus, masa_kerja_tahun, masa_kerja_bulan, latihan_jabatan, status_kepegawaian, status, created_at, updated_at) VALUES
+('197803152005011001', 'Dr. Bambang Sutrisno', 'Jakarta', '1978-03-15', '2005-01-15', '2020-04-01', 'Pembina Tingkat I', 'IV/b', 'Kepala Biro', '2022-01-01', 'S3', 'Administrasi Publik', 'Universitas Indonesia', 'Diklat Kepemimpinan Tingkat II', 'PNS', 'aktif', NOW(), NOW()),
+('198204201988032001', 'Ir. Siti Nurhaliza', 'Bandung', '1982-04-20', '1988-03-20', '2018-07-15', 'Pembina', 'IV/a', 'Kepala Bidang', '2021-06-01', 'S2', 'Teknik Sipil', 'ITB Bandung', 'Diklat Kepemimpinan Tingkat III', 'PNS', 'aktif', NOW(), NOW()),
+('198501152010011001', 'Budi Santoso, S.Kom', 'Surabaya', '1985-01-15', '2010-01-15', '2021-03-01', 'Penata', 'III/d', 'Staff', '2020-01-01', 'S1', 'Teknik Informatika', 'Universitas Surabaya', 'Diklat Fungsional IT', 'PNS', 'aktif', NOW(), NOW()),
+('198703102015021002', 'Eka Putri Wijaya', 'Yogyakarta', '1987-03-10', '2015-02-01', '2022-08-01', 'Penata Muda', 'III/b', 'Analis', '2019-06-01', 'S1', 'Perencanaan Pembangunan', 'UGM', 'Diklat Analis Kebijakan', 'PNS', 'aktif', NOW(), NOW()),
+('199002272020031003', 'Rizki Pratama, M.M.', 'Medan', '1990-02-27', '2020-03-01', '2023-01-15', 'Penata Muda Tingkat I', 'III/c', 'Operator', '2021-05-01', 'S2', 'Manajemen', 'Universitas Sumatera Utara', 'Diklat Manajemen Proyek', 'PNS', 'aktif', NOW(), NOW());
 
 -- 2. INSERT INTO UNIT_KERJA (5 records)
 INSERT INTO unit_kerja (kode_unit, nama_unit, jenis_unit, tahun, keterangan, created_at, updated_at) VALUES
