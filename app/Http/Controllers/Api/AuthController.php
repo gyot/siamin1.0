@@ -1,165 +1,192 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\AkunPeserta;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * Login for Admin users (Pegawai)
+     * Login user and return token
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function loginAdmin(Request $request): JsonResponse
-    {
-        try {
-            // Validate input
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string',
-            ]);
+    // public function login(Request $request)
+    // {
+    //     try {
+    //         $request->validate([
+    //             'email' => 'required|email',
+    //             'password' => 'required|string',
+    //         ]);
 
-            // Find user by email
-            $user = User::where('email', $validated['email'])->first();
+    //         $user = User::with('pegawai')
+    //             ->where('email', $request->email)
+    //             ->first();
 
-            // Check if user exists and password is correct
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Email atau password salah',
-                    'errors' => ['credentials' => ['Email atau password salah']]
-                ], 401);
-            }
+    //         if (!$user || !Hash::check($request->password, $user->password)) {
+    //             throw ValidationException::withMessages([
+    //                 'email' => ['Email atau password tidak valid.'],
+    //             ]);
+    //         }
 
-            // Check if user is active
-            if ($user->status !== 'aktif') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akun Anda tidak aktif',
-                ], 403);
-            }
+    //         if ($user->status === 'nonaktif') {
+    //             throw ValidationException::withMessages([
+    //                 'email' => ['User tidak aktif.'],
+    //             ]);
+    //         }
 
-            // Generate token using Sanctum
-            $token = $user->createToken('authToken')->plainTextToken;
+    //         // Update last login
+    //         $user->update(['last_login' => now()]);
 
-            // Update last login
-            $user->update(['last_login' => now()]);
+    //         // Generate token
+    //         $token = $user->createToken('auth_token')->plainTextToken;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Login berhasil',
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id_user,
-                    'name' => $user->pegawai->nama ?? 'Admin',
-                    'email' => $user->email,
-                    'role' => $user->role,
-                ]
-            ], 200);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Login berhasil',
+    //             'data' => [
+    //                 'user' => [
+    //                     'id_user' => $user->id_user,
+    //                     'email' => $user->email,
+    //                     'role' => $user->role,
+    //                     'status' => $user->status,
+    //                     'last_login' => $user->last_login,
+    //                     'pegawai' => $user->pegawai ? [
+    //                         'id_pegawai' => $user->pegawai->id_pegawai,
+    //                         'nip' => $user->pegawai->nip,
+    //                         'nama' => $user->pegawai->nama,
+    //                         'nama_jabatan' => $user->pegawai->nama_jabatan,
+    //                         'golongan' => $user->pegawai->golongan,
+    //                         'pangkat' => $user->pegawai->pangkat,
+    //                     ] : null,
+    //                 ],
+    //                 'token' => $token,
+    //                 'token_type' => 'Bearer',
+    //             ],
+    //         ], 200);
+    //     } catch (ValidationException $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validasi gagal',
+    //             'errors' => $e->errors(),
+    //         ], 422);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     /**
-     * Login for Peserta
+     * Get authenticated user profile
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function loginPeserta(Request $request): JsonResponse
-    {
-        try {
-            // Validate input
-            $validated = $request->validate([
-                'username' => 'required|string',
-                'password' => 'required|string',
-            ]);
+    // public function profile(Request $request)
+    // {
+    //     try {
+    //         $user = $request->user()->load('pegawai');
 
-            // Find peserta account by username
-            $akunPeserta = AkunPeserta::where('username', $validated['username'])->first();
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Data profil berhasil diambil',
+    //             'data' => [
+    //                 'id_user' => $user->id_user,
+    //                 'email' => $user->email,
+    //                 'role' => $user->role,
+    //                 'status' => $user->status,
+    //                 'last_login' => $user->last_login,
+    //                 'pegawai' => $user->pegawai ? [
+    //                     'id_pegawai' => $user->pegawai->id_pegawai,
+    //                     'nip' => $user->pegawai->nip,
+    //                     'nama' => $user->pegawai->nama,
+    //                     'tempat_lahir' => $user->pegawai->tempat_lahir,
+    //                     'tanggal_lahir' => $user->pegawai->tanggal_lahir,
+    //                     'nama_jabatan' => $user->pegawai->nama_jabatan,
+    //                     'golongan' => $user->pegawai->golongan,
+    //                     'pangkat' => $user->pegawai->pangkat,
+    //                     'status_kepegawaian' => $user->pegawai->status_kepegawaian,
+    //                 ] : null,
+    //             ],
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
-            // Check if account exists and password is correct
-            if (!$akunPeserta || !Hash::check($validated['password'], $akunPeserta->password)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Username atau password salah',
-                    'errors' => ['credentials' => ['Username atau password salah']]
-                ], 401);
-            }
+    // /**
+    //  * Logout user
+    //  *
+    //  * @param Request $request
+    //  * @return \Illuminate\Http\JsonResponse
+    //  */
+    // public function logout(Request $request)
+    // {
+    //     try {
+    //         $request->user()->currentAccessToken()->delete();
 
-            // Check if account is active
-            if ($akunPeserta->status !== 'aktif') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akun Anda tidak aktif',
-                ], 403);
-            }
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Logout berhasil',
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
-            // Generate token using Sanctum
-            $token = $akunPeserta->createToken('pesertaToken')->plainTextToken;
+    private function attemptLogin(Request $request, array $roles)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
 
-            // Update last login
-            $akunPeserta->update(['last_login' => now()]);
+    $user = User::with('pegawai')
+        ->where('email', $request->email)
+        ->whereIn('role', $roles)
+        ->where('status','aktif')
+        ->first();
 
-            // Get peserta data
-            $peserta = $akunPeserta->peserta;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Login berhasil',
-                'token' => $token,
-                'user' => [
-                    'id' => $akunPeserta->id_akun_peserta,
-                    'name' => $peserta->nama_peserta ?? 'Peserta',
-                    'email' => $peserta->email_peserta ?? '',
-                    'username' => $akunPeserta->username,
-                ]
-            ], 200);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage(),
-            ], 500);
-        }
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        throw ValidationException::withMessages([
+            'email' => ['Email atau password tidak valid.'],
+        ]);
     }
 
-    /**
-     * Logout user
-     */
-    public function logout(Request $request): JsonResponse
-    {
-        try {
-            // Revoke the token
-            $request->user()->currentAccessToken()->delete();
+    $user->update(['last_login' => now()]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Logout berhasil',
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat logout',
-            ], 500);
-        }
-    }
+    return response()->json([
+        'success' => true,
+        'message' => 'Login berhasil',
+        'data' => [
+            'user' => $user,
+            'token' => $user->createToken('siamin-api')->plainTextToken,
+            'token_type' => 'Bearer'
+        ]
+    ]);
+}
+
+public function loginAdmin(Request $request)
+{
+    return $this->attemptLogin($request, ['admin','operator','verifikator','kepala']);
+}
+
+public function loginPeserta(Request $request)
+{
+    return $this->attemptLogin($request, ['peserta']);
+}
+
 }

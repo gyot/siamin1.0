@@ -1,23 +1,277 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIAMIN Backend API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SIAMIN Backend adalah API server untuk sistem informasi manajemen kepegawaian yang dibangun menggunakan Laravel 12.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2+
+- Composer
+- SQLite (included)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation
+
+### 1. Navigate to Project Directory
+```bash
+cd siamin-backend
+```
+
+### 2. Install Dependencies
+```bash
+composer install
+```
+
+### 3. Setup Environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 4. Setup Database
+```bash
+php artisan migrate:fresh --seed
+```
+
+Perintah ini akan:
+- Membuat database SQLite
+- Menjalankan semua migrations
+- Seed data test (4 users dengan role berbeda)
+
+### 5. Start Development Server
+```bash
+php artisan serve
+```
+
+Server akan berjalan pada `http://127.0.0.1:8000`
+
+## Project Structure
+
+### Models
+- **User** (`app/Models/User.php`)
+  - Model untuk user authentication
+  - Memiliki relasi dengan Pegawai
+  - Fields: id_user, id_pegawai, email, password, role, last_login, status
+
+- **Pegawai** (`app/Models/Pegawai.php`)
+  - Model untuk data pegawai
+  - Memiliki relasi dengan User
+  - Fields: id_pegawai, nip, nama, jabatan, golongan, pangkat, dll
+
+### Controllers
+- **AuthController** (`app/Http/Controllers/Api/AuthController.php`)
+  - Menangani login endpoint
+  - Menangani profile endpoint (protected)
+  - Menangani logout endpoint (protected)
+
+### Routes
+- **API Routes** (`routes/api.php`)
+  - POST `/api/v1/login` - Login user
+  - GET `/api/v1/profile` - Get user profile (protected)
+  - POST `/api/v1/logout` - Logout user (protected)
+
+### Database
+- **Migrations** (`database/migrations/`)
+  - `0001_01_01_000000_create_pegawai_table.php` - Create pegawai table
+  - `0001_01_01_000000_create_users_table.php` - Create users table
+  - `2026_01_27_030512_create_personal_access_tokens_table.php` - Sanctum tokens
+
+- **Seeders** (`database/seeders/`)
+  - `DatabaseSeeder.php` - Seed test data
+
+## Quick Start
+
+### Login dengan Test Account
+
+**Credentials:**
+```
+Email: admin@siamin.test
+Password: password123
+```
+
+**Curl Request:**
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@siamin.test","password":"password123"}'
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Login berhasil",
+    "data": {
+        "user": {
+            "id_user": 1,
+            "email": "admin@siamin.test",
+            "role": "admin",
+            "pegawai": { ... }
+        },
+        "token": "1|abc123...",
+        "token_type": "Bearer"
+    }
+}
+```
+
+## API Documentation
+
+Lihat [API_DOCUMENTATION.md](API_DOCUMENTATION.md) untuk dokumentasi lengkap semua endpoints.
+
+## Available Test Accounts
+
+| Email | Password | Role | Pegawai |
+|-------|----------|------|---------|
+| admin@siamin.test | password123 | admin | Adi Pratama Nugroho |
+| verifikator@siamin.test | password123 | verifikator | Siti Nurhaliza |
+| operator@siamin.test | password123 | operator | Budi Handoko |
+| kepala@siamin.test | password123 | kepala | None |
+
+## Common Commands
+
+### Database Operations
+```bash
+# Fresh migrate with seed data
+php artisan migrate:fresh --seed
+
+# Run only seeders
+php artisan db:seed
+
+# Rollback all migrations
+php artisan migrate:rollback
+
+# Reset everything
+php artisan migrate:reset
+```
+
+### Cache Operations
+```bash
+# Clear application cache
+php artisan cache:clear
+
+# Clear config cache
+php artisan config:clear
+
+# Clear all caches
+php artisan optimize:clear
+```
+
+### Development
+```bash
+# Start development server
+php artisan serve
+
+# Open tinker (interactive shell)
+php artisan tinker
+
+# Run tests
+php artisan test
+```
+
+## Project Features
+
+✅ **Authentication**
+- User login dengan email & password
+- Token-based authentication (Sanctum)
+- Session tracking (last_login)
+
+✅ **User Management**
+- Multiple roles (admin, operator, verifikator, kepala)
+- User status tracking (aktif/nonaktif)
+- User profile endpoint
+
+✅ **Employee Data**
+- Complete employee information
+- NIP (Nomor Induk Pegawai) management
+- Position and rank tracking
+- Education history
+- Employment status tracking
+
+✅ **Security**
+- Password hashing (Bcrypt)
+- Input validation
+- Protected endpoints
+- CORS ready
+
+## Configuration
+
+### Database (.env)
+```env
+DB_CONNECTION=sqlite
+```
+
+### Authentication (config/sanctum.php)
+- Token expiration configurable
+- Multiple guard support
+
+### CORS (config/cors.php)
+Configure allowed origins, methods, headers.
+
+## Troubleshooting
+
+### Port 8000 Already in Use
+```bash
+php artisan serve --port 8001
+```
+
+### Database Lock
+```bash
+php artisan migrate:refresh
+```
+
+### Clear All Caches
+```bash
+php artisan optimize:clear
+```
+
+### Composer Issues
+```bash
+composer update
+composer dump-autoload
+```
+
+## Project Status
+
+✅ Complete
+
+- Database schema created
+- Models and relationships established
+- Authentication controller implemented
+- API routes configured
+- Test data seeded
+- API documentation provided
+
+## Next Steps (Optional)
+
+Untuk pengembangan lebih lanjut:
+
+1. **Tambah Endpoints**
+   - Employee CRUD endpoints
+   - Advanced filtering & search
+   - Pagination support
+
+2. **Security Enhancements**
+   - Rate limiting
+   - CORS configuration
+   - Request validation middleware
+
+3. **Testing**
+   - Unit tests
+   - Feature tests
+   - API integration tests
+
+4. **Documentation**
+   - OpenAPI/Swagger docs
+   - Postman collection
+
+## Support
+
+Untuk informasi lebih lanjut, lihat dokumentasi resmi:
+- [Laravel Documentation](https://laravel.com/docs)
+- [Laravel Sanctum](https://laravel.com/docs/sanctum)
+- [SQLite](https://www.sqlite.org/)
+
+## License
+
+MIT License
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 

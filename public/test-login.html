@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SIAMIN Login API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; }
+        .response { background: #f0f0f0; padding: 15px; margin-top: 20px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SIAMIN API Login Test</h1>
+        
+        <div>
+            <label>Email:</label>
+            <input type="text" id="email" value="admin@siamin.test">
+            
+            <label>Password:</label>
+            <input type="password" id="password" value="password123">
+            
+            <button onclick="testLogin()">Test Login</button>
+        </div>
+        
+        <div id="response" class="response" style="display:none;">
+            <h3>Response:</h3>
+            <pre id="responseBody"></pre>
+        </div>
+    </div>
+
+    <script>
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                const responseDiv = document.getElementById('response');
+                const responseBody = document.getElementById('responseBody');
+                
+                responseDiv.style.display = 'block';
+                responseBody.textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                } else {
+                    responseDiv.className = 'response error';
+                }
+            } catch (error) {
+                document.getElementById('response').style.display = 'block';
+                document.getElementById('responseBody').textContent = 'Error: ' + error.message;
+                document.getElementById('response').className = 'response error';
+            }
+        }
+    </script>
+</body>
+</html>
