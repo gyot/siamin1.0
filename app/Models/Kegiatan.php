@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\Pegawai;
+use App\Models\User;
+use App\Models\SuratTugas;
+use App\Models\SuratTugasPegawai;
+
 class Kegiatan extends Model
 {
     use HasFactory;
@@ -46,5 +51,29 @@ class Kegiatan extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id_user');
+    }
+
+    /**
+     * Kegiatan may have multiple surat tugas documents.
+     */
+    public function suratTugas()
+    {
+        return $this->hasMany(SuratTugas::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    /**
+     * Shortcut to access all pegawai entries attached to this kegiatan through surat tugas.
+     */
+    public function suratTugasPegawais()
+    {
+        // hasManyThrough(Target, Through, firstKey, secondKey, localKey, secondLocalKey)
+        return $this->hasManyThrough(
+            SuratTugasPegawai::class,
+            SuratTugas::class,
+            'id_kegiatan',        // FK on surat_tugas table
+            'id_surat_tugas',     // FK on surat_tugas_pegawai table
+            'id_kegiatan',        // Local key on kegiatan
+            'id_surat_tugas'      // Local key on surat_tugas
+        );
     }
 }

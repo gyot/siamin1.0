@@ -15,7 +15,28 @@ class KegiatanController extends Controller
      */
     public function index()
     {
-        $data = Kegiatan::orderBy('tanggal_mulai', 'desc')->get();
+        // Show kegiatan where:
+        // 1. kegiatan.id_pegawai = logged-in pegawai, OR
+        // 2. logged-in pegawai appears in surat_tugas_pegawai
+        $user = auth()->user();
+        $pegawaiId = $user?->id_pegawai;
+
+        $query = Kegiatan::orderBy('tanggal_mulai', 'desc');
+
+        if ($pegawaiId) {
+            $query->where(function ($q) use ($pegawaiId) {
+                $q->where('id_pegawai', $pegawaiId)
+                  ->orWhereHas('suratTugasPegawais', function ($subQ) use ($pegawaiId) {
+                      $subQ->where('id_pegawai', $pegawaiId);
+                  });
+            });
+        } else {
+            // if no pegawai id on user, return empty set
+            $query->whereRaw('0 = 1');
+        }
+
+        $data = $query->get();
+
         return response()->json(["success" => true, "data" => $data]);
     }
 

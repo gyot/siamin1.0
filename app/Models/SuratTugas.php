@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Kegiatan;
+use App\Models\Pegawai;
+use App\Models\SuratTugasPegawai;
 
 class SuratTugas extends Model
 {
@@ -22,4 +25,19 @@ class SuratTugas extends Model
         'status',
         'file_surat',
     ];
+
+    public function kegiatan()
+    {
+        return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function penandatangan()
+    {
+        return $this->belongsTo(Pegawai::class, 'id_penandatangan', 'id_pegawai');
+    }
+
+    public function suratTugasPegawais()
+    {
+        return $this->hasMany(SuratTugasPegawai::class, 'id_surat_tugas', 'id_surat_tugas');
+    }
 }

@@ -691,6 +691,10 @@ namespace App\Models {
      * @property int $id_kegiatan
      * @property-read \App\Models\Pegawai $pegawai
      * @property-read \App\Models\User $creator
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SuratTugas> $suratTugas
+     * @property-read int|null $suratTugas_count
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SuratTugasPegawai> $suratTugasPegawais
+     * @property-read int|null $suratTugasPegawais_count
      * @method static \Illuminate\Database\Eloquent\Builder<Kegiatan>|Kegiatan whereIdKegiatan($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Kegiatan>|Kegiatan whereIdPegawai($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Kegiatan>|Kegiatan whereNamaKegiatan($value)
@@ -2748,6 +2752,10 @@ namespace App\Models {
      * @property string|null $nomor_surat
      * @property mixed $id_kegiatan
      * @property int $id_surat_tugas
+     * @property-read \App\Models\Kegiatan $kegiatan
+     * @property-read \App\Models\Pegawai $penandatangan
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SuratTugasPegawai> $suratTugasPegawais
+     * @property-read int|null $suratTugasPegawais_count
      * @method static \Illuminate\Database\Eloquent\Builder<SuratTugas>|SuratTugas whereIdSuratTugas($value)
      * @method static \Illuminate\Database\Eloquent\Builder<SuratTugas>|SuratTugas whereIdKegiatan($value)
      * @method static \Illuminate\Database\Eloquent\Builder<SuratTugas>|SuratTugas whereNomorSurat($value)
