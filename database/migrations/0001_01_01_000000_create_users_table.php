@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('id_user');
             $table->foreignId('id_pegawai')->nullable()->constrained('pegawai', 'id_pegawai')->onDelete('set null');
             $table->string('email', 150)->unique();
+            $table->string('user', 150)->unique();
             $table->string('password');
             $table->enum('role', ['admin', 'operator', 'verifikator', 'kepala'])->default('operator');
             $table->timestamp('last_login')->nullable();

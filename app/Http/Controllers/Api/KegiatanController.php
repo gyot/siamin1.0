@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Storage;
 class KegiatanController extends Controller
 {
     /**
+     * Display all kegiatan without filter
+     */
+    public function getAllKegiatan()
+    {
+        $data = Kegiatan::orderBy('tanggal_mulai', 'desc')->get();
+        return response()->json(["success" => true, "data" => $data]);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
