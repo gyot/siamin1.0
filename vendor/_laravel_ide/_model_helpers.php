@@ -3736,6 +3736,7 @@ namespace App\Models {
      * @property \Illuminate\Support\Carbon|null $last_login
      * @property mixed $role
      * @property string $password
+     * @property string|null $user
      * @property string $email
      * @property mixed $id_pegawai
      * @property int $id_user
@@ -3747,6 +3748,7 @@ namespace App\Models {
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereIdUser($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereIdPegawai($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereEmail($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereUser($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User wherePassword($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereRole($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereLastLogin($value)

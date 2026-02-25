@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // config/services.php
+    'external_auth' => [
+        'url' => env('EXTERNAL_AUTH_URL'),
+        'key' => env('EXTERNAL_AUTH_KEY'),
+    ],
+    'external_pegawai' => [
+        'url' => env('EXTERNAL_PEGAWAI_URL'),
+    ],
 ];
