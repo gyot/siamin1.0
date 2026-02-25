@@ -66,7 +66,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $user->update(['last_login' => now()]);
+        // $user->update(['last_login' => now()]);
 
         return response()->json([
             'success' => true,
