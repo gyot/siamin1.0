@@ -33,26 +33,11 @@ class KegiatanController extends Controller
         $query = Kegiatan::orderBy('tanggal_mulai', 'desc');
 
         if ($pegawaiId) {
-            // Ambil semua id_pegawai yang satu tim dengan pegawai ini
-            $timPegawaiIds = \App\Models\KeanggotaanTim::where('id_pegawai', $pegawaiId)
-                ->pluck('id_tim');
-            $anggotaTimIds = [];
-            if ($timPegawaiIds->count() > 0) {
-                $anggotaTimIds = \App\Models\KeanggotaanTim::whereIn('id_tim', $timPegawaiIds)
-                    ->pluck('id_pegawai')->unique()->toArray();
-            }
-            $query->where(function ($q) use ($pegawaiId, $anggotaTimIds) {
+            $query->where(function ($q) use ($pegawaiId) {
                 $q->where('id_pegawai', $pegawaiId)
                   ->orWhereHas('suratTugasPegawais', function ($subQ) use ($pegawaiId) {
                       $subQ->where('id_pegawai', $pegawaiId);
                   });
-                // Tambahkan filter untuk anggota satu tim
-                if (!empty($anggotaTimIds)) {
-                    $q->orWhereIn('id_pegawai', $anggotaTimIds)
-                      ->orWhereHas('suratTugasPegawais', function ($subQ) use ($anggotaTimIds) {
-                          $subQ->whereIn('id_pegawai', $anggotaTimIds);
-                      });
-                }
             });
         } else {
             // if no pegawai id on user, return empty set
@@ -134,24 +119,24 @@ class KegiatanController extends Controller
         }
 
         $validated = $request->validate([
-            'nama_kegiatan' => 'sometimes|string|max:255',
-            'rincian_kegiatan' => 'sometimes|string',
-            'dokumentasi_url' => 'sometimes|string|max:255',
-            'materi_url' => 'sometimes|string',
-            'panduan_url' => 'sometimes|string',
-            'laporan_url' => 'sometimes|string',
-            'surat_menyurat_url' => 'sometimes|string',
+            'nama_kegiatan' => 'sometimes|nullable|string|max:255',
+            'rincian_kegiatan' => 'sometimes|nullable|string',
+            'dokumentasi_url' => 'sometimes|nullable|string',
+            'materi_url' => 'sometimes|nullable|string',
+            'panduan_url' => 'sometimes|nullable|string',
+            'laporan_url' => 'sometimes|nullable|string',
+            'surat_menyurat_url' => 'sometimes|nullable|string',
             'tanggal_mulai' => 'sometimes|date',
             'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
-            'lokasi' => 'sometimes|string|max:255',
-            'flyer' => 'sometimes|file|image|max:2048',
-            'peserta_ringkasan' => 'sometimes|string|max:255',
+            'lokasi' => 'sometimes|nullable|string|max:255',
+            'flyer' => 'sometimes|nullable|image|max:2048',
+            'peserta_ringkasan' => 'sometimes|nullable|string',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [
                 'sometimes',
                 Rule::in(['transfer','pulsa','transfer_dan_pulsa','tunai','tidak_dibayar']),
             ],
-            'deskripsi' => 'sometimes|string',
+            'deskripsi' => 'sometimes|nullable|string',
             'metode_pelaksanaan' => [
                 'sometimes',
                 Rule::in(['daring','luring','hybrid']),
@@ -160,13 +145,17 @@ class KegiatanController extends Controller
                 'sometimes',
                 Rule::in(['draft','berjalan','selesai','dibatalkan']),
             ],
-            'created_by' => 'sometimes|exists:users,id_user',
+            'created_by' => 'sometimes|nullable|exists:users,id_user',
             'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
         ]);
 
         if ($request->hasFile('flyer')) {
             $path = $request->file('flyer')->store('flyers', 'public');
             $validated['flyer'] = $path;
+        } elseif ($request->exists('flyer') && blank($request->input('flyer'))) {
+            $validated['flyer'] = null;
+        } else {
+            unset($validated['flyer']);
         }
 
         $kegiatan->update($validated);

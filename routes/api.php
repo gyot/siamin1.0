@@ -25,13 +25,16 @@ Route::prefix('v1')->group(function () {
         Route::post('/login-peserta', [AuthController::class, 'loginPeserta']);
     });
 
+
+    // KEGIATAN & PESERTA TANPA LOGIN
+    Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
+    Route::apiResource('kegiatan', KegiatanController::class);
+    Route::apiResource('peserta', PesertaController::class);
+
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
-
         Route::apiResource('users', UserController::class);
         Route::apiResource('pegawai', PegawaiController::class);
-        Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
-        Route::apiResource('kegiatan', KegiatanController::class);
         Route::apiResource('peserta', PesertaController::class);
         Route::apiResource('sertifikat', SertifikatController::class);
         Route::apiResource('akun-peserta', AkunPesertaController::class);

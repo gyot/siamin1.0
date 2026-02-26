@@ -21,8 +21,9 @@ class KeanggotaanTimController extends BaseApiController
     /**
      * List resources with optional filters and pagination.
      */
-    public function index(Request $request)
+    public function index()
     {
+        $request = request();
         $query = KeanggotaanTim::with(['pegawai', 'unit', 'subUnit']);
 
         if ($request->filled('id_pegawai')) {
