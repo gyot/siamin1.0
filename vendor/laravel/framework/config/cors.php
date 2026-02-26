@@ -25,7 +25,12 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => [
+         'Link',
+        'X-Pagination-Total',
+        'X-Pagination-Page',
+        'X-Pagination-Per-Page',
+    ],
 
     'max_age' => 0,
 

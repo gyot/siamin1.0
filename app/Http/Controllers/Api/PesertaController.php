@@ -123,6 +123,7 @@ class PesertaController extends BaseApiController
             ],
             'nama_instansi' => 'sometimes|string|max:255',
             'alamat_instansi' => 'sometimes|string',
+            'npsn' => 'sometimes|string|max:20',
             'kab_kota' => 'sometimes|string|max:100',
             'provinsi' => 'sometimes|string|max:100',
             'telp_instansi' => 'sometimes|string|max:20',
