@@ -137,7 +137,7 @@ class PesertaController extends BaseApiController
             'tanda_tangan' => 'sometimes|file|image|max:2048',
         ]);
 
-        // Handle signature image upload (delete old if updating)
+        // Handle signature image upload (delete old if updating) 
         if ($request->hasFile('tanda_tangan')) {
             // Delete old signature if exists
             if ($peserta->tanda_tangan && Storage::disk('public')->exists($peserta->tanda_tangan)) {
