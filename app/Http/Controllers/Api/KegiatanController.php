@@ -33,11 +33,26 @@ class KegiatanController extends Controller
         $query = Kegiatan::orderBy('tanggal_mulai', 'desc');
 
         if ($pegawaiId) {
-            $query->where(function ($q) use ($pegawaiId) {
+            // Ambil semua id_pegawai yang satu tim dengan pegawai ini
+            $timPegawaiIds = \App\Models\KeanggotaanTim::where('id_pegawai', $pegawaiId)
+                ->pluck('id_tim');
+            $anggotaTimIds = [];
+            if ($timPegawaiIds->count() > 0) {
+                $anggotaTimIds = \App\Models\KeanggotaanTim::whereIn('id_tim', $timPegawaiIds)
+                    ->pluck('id_pegawai')->unique()->toArray();
+            }
+            $query->where(function ($q) use ($pegawaiId, $anggotaTimIds) {
                 $q->where('id_pegawai', $pegawaiId)
                   ->orWhereHas('suratTugasPegawais', function ($subQ) use ($pegawaiId) {
                       $subQ->where('id_pegawai', $pegawaiId);
                   });
+                // Tambahkan filter untuk anggota satu tim
+                if (!empty($anggotaTimIds)) {
+                    $q->orWhereIn('id_pegawai', $anggotaTimIds)
+                      ->orWhereHas('suratTugasPegawais', function ($subQ) use ($anggotaTimIds) {
+                          $subQ->whereIn('id_pegawai', $anggotaTimIds);
+                      });
+                }
             });
         } else {
             // if no pegawai id on user, return empty set
