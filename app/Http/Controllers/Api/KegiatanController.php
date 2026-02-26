@@ -115,7 +115,7 @@ class KegiatanController extends Controller
     {
         $kegiatan = Kegiatan::find($id);
         if (!$kegiatan) {
-            return response()->json(["success" => false, "message" => "Kegiatan tidak ditemukan"], 404);
+            return response()->json(["success" => false, "message" => "Kegiatan yang anda cari tidak ditemukan"], 404);
         }
 
         $validated = $request->validate([
