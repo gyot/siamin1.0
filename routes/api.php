@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
 
     // KEGIATAN & PESERTA TANPA LOGIN
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
+    Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::apiResource('kegiatan', KegiatanController::class);
     Route::apiResource('peserta', PesertaController::class);
 

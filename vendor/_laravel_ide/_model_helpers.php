@@ -1724,6 +1724,7 @@ namespace App\Models {
      * @property string|null $telp_instansi
      * @property string|null $provinsi
      * @property string|null $kab_kota
+     * @property string|null $npsn
      * @property string|null $alamat_instansi
      * @property string|null $nama_instansi
      * @property string|null $jenis_kelamin
@@ -1756,6 +1757,7 @@ namespace App\Models {
      * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereJenisKelamin($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereNamaInstansi($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereAlamatInstansi($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereNpsn($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereKabKota($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereProvinsi($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Peserta>|Peserta whereTelpInstansi($value)

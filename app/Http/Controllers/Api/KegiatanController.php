@@ -19,6 +19,12 @@ class KegiatanController extends Controller
         return response()->json(["success" => true, "data" => $data]);
     }
 
+    public function getAllKegiatanTim($id)
+    {
+        $data = DB::table('kegiatan_tim')->where('unit_kerja_id', $id)->orderBy('tanggal_mulai', 'desc')->get();
+        return response()->json(["success" => true, "data" => $data]);
+    }
+
     /**
      * Display a listing of the resource.
      */
