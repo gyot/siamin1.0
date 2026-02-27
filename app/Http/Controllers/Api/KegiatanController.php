@@ -7,6 +7,7 @@ use App\Models\Kegiatan;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class KegiatanController extends Controller
 {
@@ -21,7 +22,7 @@ class KegiatanController extends Controller
 
     public function getAllKegiatanTim($id)
     {
-        $data = DB::table('kegiatan_tim')->where('unit_kerja_id', $id)->orderBy('tanggal_mulai', 'desc')->get();
+        $data = DB::table('kegiatan_tim')->where('unit_kerja', $id)->orderBy('tanggal_mulai', 'desc')->get();
         return response()->json(["success" => true, "data" => $data]);
     }
 
