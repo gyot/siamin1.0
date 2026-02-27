@@ -31,7 +31,8 @@ Route::prefix('v1')->group(function () {
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::apiResource('kegiatan', KegiatanController::class);
     Route::apiResource('peserta', PesertaController::class);
-
+    Route::apiResource('unit-kerja', UnitKerjaController::class);
+    
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
@@ -43,7 +44,6 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
         Route::apiResource('surat-tugas', SuratTugasController::class);
         Route::apiResource('surat-tugas-pegawai', SuratTugasPegawaiController::class);
-        Route::apiResource('unit-kerja', UnitKerjaController::class);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
 
         Route::post('/logout', [AuthController::class, 'logout']);
