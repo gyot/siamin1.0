@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 
 class UnitKerjaController extends BaseApiController
 {
-    protected $modelClass = UnitKerja::class;
+    // protected $modelClass = UnitKerja::class;
 
     public function index()
     {
