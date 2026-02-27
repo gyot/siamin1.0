@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\UnitKerja;
+use App\Models\UnitKeruse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -83,4 +83,6 @@ class UnitKerjaController extends BaseApiController
             ], 422);
         }
     }
+    
+
 }
