@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\UnitKerja;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
+
 class UnitKerjaController extends BaseApiController
 {
-    protected $modelClass = UnitKerja::class;
-    protected $rules = [
-        'kode_unit' => 'sometimes|string|max:50',
-        'nama_unit' => 'sometimes|string|max:255',
-    ];
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $data = UnitKerja::where('kode_unit', '!=', '000')->get();
 
+        return response()->json($data);
+    }
 }
