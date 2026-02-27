@@ -14,7 +14,7 @@ class UnitKerjaController extends BaseApiController
 
     public function index()
     {
-        $data = UnitKerja::where('kode_unit', '!=', '000')->orderBy('created_at', 'desc')->get();
+        $data = UnitKerja::orderBy('created_at', 'desc')->get();
         return response()->json(['success' => true, 'data' => $data]);
     }
 
