@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\KeanggotaanTim;
+use App\Models\UnitKerja;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -68,7 +69,7 @@ class AuthController extends Controller
         }
 
         // $user->update(['last_login' => now()]);
-        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai);
+        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $user->unit_kerja_id ?? null);
 
         return response()->json([
             'success' => true,
@@ -96,7 +97,7 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user()->load('pegawai');
-        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai);
+        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $user->unit_kerja_id ?? null);
 
         return response()->json([
             'success' => true,
@@ -129,25 +130,79 @@ class AuthController extends Controller
         ]);
     }
 
-    private function getUnitKerjaByPegawai($pegawaiId)
+    private function getUnitKerjaByPegawai($pegawaiId, $rawUnitKerjaId = null)
     {
-        if (! $pegawaiId) {
+        $idsFromTim = collect();
+
+        if ($pegawaiId) {
+            $idsFromTim = KeanggotaanTim::where('id_pegawai', $pegawaiId)
+                ->pluck('unit_kerja_id')
+                ->filter()
+                ->map(fn ($v) => (string) $v);
+        }
+
+        $idsFromUser = $this->normalizeUnitKerjaIds($rawUnitKerjaId);
+        $allIds = $idsFromTim->merge($idsFromUser)->unique()->values();
+
+        if ($allIds->isEmpty()) {
             return collect();
         }
 
-        return KeanggotaanTim::with('unit')
-            ->where('id_pegawai', $pegawaiId)
-            ->get()
-            ->filter(fn ($item) => $item->unit)
-            ->map(function ($item) {
-                return [
-                    'unit_kerja_id' => $item->unit_kerja_id,
-                    'nama_unit' => $item->unit->nama_unit,
-                    'kode_unit' => $item->unit->kode_unit,
-                ];
-            })
-            ->unique('unit_kerja_id')
+        $numericIds = $allIds
+            ->filter(fn ($v) => preg_match('/^\d+$/', (string) $v))
+            ->map(fn ($v) => (int) $v)
             ->values();
+
+        $units = UnitKerja::query()
+            ->whereIn('kode_unit', $allIds->all())
+            ->orWhereIn('id', $numericIds->all())
+            ->get();
+
+        return $allIds->map(function ($rawId) use ($units) {
+            $numericId = preg_match('/^\d+$/', (string) $rawId) ? (int) $rawId : null;
+
+            $unit = $units->first(function ($item) use ($rawId, $numericId) {
+                return $item->kode_unit === (string) $rawId
+                    || ($numericId !== null && (int) $item->id === $numericId);
+            });
+
+            return [
+                'unit_kerja_id' => (string) $rawId,
+                'nama_unit' => $unit?->nama_unit ?? null,
+                'kode_unit' => $unit?->kode_unit ?? (string) $rawId,
+            ];
+        })->values();
+    }
+
+    private function normalizeUnitKerjaIds($rawUnitKerjaId)
+    {
+        if (is_null($rawUnitKerjaId)) {
+            return collect();
+        }
+
+        if (is_array($rawUnitKerjaId)) {
+            return collect($rawUnitKerjaId)
+                ->map(fn ($v) => trim((string) $v))
+                ->filter();
+        }
+
+        $raw = trim((string) $rawUnitKerjaId);
+        if ($raw === '') {
+            return collect();
+        }
+
+        if (str_starts_with($raw, '[') && str_ends_with($raw, ']')) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return collect($decoded)
+                    ->map(fn ($v) => trim((string) $v))
+                    ->filter();
+            }
+        }
+
+        return collect(explode(',', $raw))
+            ->map(fn ($v) => trim((string) $v))
+            ->filter();
     }
 
     // public function me(Request $request)
