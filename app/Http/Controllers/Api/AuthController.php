@@ -109,6 +109,7 @@ class AuthController extends Controller
                     'last_login' => $user->last_login,
                     'created_at' => $user->created_at,
                     'unit_kerja_id' => $unitKerja->pluck('unit_kerja_id')->unique()->values(),
+                    'unit_kerja' => $unitKerja->values(),
                 ],
                 'pegawai' => $user->pegawai ? [
                     'id_pegawai' => $user->pegawai->id_pegawai,
