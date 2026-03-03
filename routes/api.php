@@ -32,12 +32,13 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('kegiatan', KegiatanController::class);
     Route::apiResource('peserta', PesertaController::class);
     Route::apiResource('unit-kerja', UnitKerjaController::class);
+    Route::get('unit-kerja/user/{id}', [UnitKerjaController::class, 'unit_user']);
     
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
         Route::apiResource('pegawai', PegawaiController::class);
-        Route::apiResource('peserta', PesertaController::class);
+        // Route::apiResource('peserta', PesertaController::class);
         Route::apiResource('sertifikat', SertifikatController::class);
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);

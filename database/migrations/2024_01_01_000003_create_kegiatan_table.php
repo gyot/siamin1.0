@@ -28,6 +28,7 @@ return new class extends Migration
             $table->integer('total_peserta')->nullable();
             // foreign key linking to pegawai table
             $table->foreignId('id_pegawai')->nullable()->constrained('pegawai','id_pegawai')->onDelete('set null');
+            $table->foreignId('unit_kerja_id')->nullable()->constrained('unit_kerja','id')->onDelete('set null');
             $table->enum('metode_pembayaran', [
                 'transfer',
                 'pulsa',

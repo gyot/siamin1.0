@@ -41,6 +41,7 @@ class Kegiatan extends Model
         'status',
         'created_by',
         'id_pegawai',
+        'unit_kerja_id',
     ];
 
     public function pegawai()
