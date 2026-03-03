@@ -346,7 +346,6 @@ namespace App\Models {
      * @property-read \App\Models\Pegawai $pegawai
      * @property-read \App\Models\UnitKerja $unit
      * @property-read \App\Models\SubUnitKerja $subUnit
-     * @property-read \App\Models\UnitKerja $unitKerja
      * @method static \Illuminate\Database\Eloquent\Builder<KeanggotaanTim>|KeanggotaanTim whereId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<KeanggotaanTim>|KeanggotaanTim whereIdPegawai($value)
      * @method static \Illuminate\Database\Eloquent\Builder<KeanggotaanTim>|KeanggotaanTim whereUnitKerjaId($value)

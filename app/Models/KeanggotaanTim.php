@@ -34,13 +34,4 @@ class KeanggotaanTim extends Model
     {
         return $this->belongsTo(SubUnitKerja::class, 'sub_unit_kerja_id', 'id');
     }
-
-    public function unitKerja()
-    {
-        return $this->belongsTo(
-            \App\Models\UnitKerja::class,
-            'unit_kerja_id', // foreign key di tabel keanggotaan_tim
-            'id'             // primary key di tabel unit_kerja
-        );
-    }
 }
