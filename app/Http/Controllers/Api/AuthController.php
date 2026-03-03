@@ -122,49 +122,51 @@ class AuthController extends Controller
     // }
 
     public function me(Request $request)
-    {
-        $user = $request->user()->load([
-            'pegawai.keanggotaanTim.unitKerja',
-        ]);
+{
+    $user = $request->user()->load([
+        'pegawai.keanggotaanTim.unitKerja'
+    ]);
 
-        $unitKerja = [];
-
-        if ($user->pegawai) {
-            $unitKerja = $user->pegawai->keanggotaanTim
-                ->filter(fn ($kt) => $kt->unitKerja)
-                ->map(function ($kt) {
-                    return [
-                        'id_unit' => $kt->unitKerja->id,
-                        'nama_unit' => $kt->unitKerja->nama_unit,
-                    ];
-                })
-                ->values();
-        }
-
+    if (!$user) {
         return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => [
-                    'id_user' => $user->id_user,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'status' => $user->status,
-                    'last_login' => $user->last_login,
-                    'created_at' => $user->created_at,
-                ],
-                'pegawai' => $user->pegawai ? [
-                    'id_pegawai' => $user->pegawai->id_pegawai,
-                    'nip' => $user->pegawai->nip,
-                    'nama' => $user->pegawai->nama,
-                    'tempat_lahir' => $user->pegawai->tempat_lahir,
-                    'tanggal_lahir' => $user->pegawai->tanggal_lahir,
-                    'nama_jabatan' => $user->pegawai->nama_jabatan,
-                    'golongan' => $user->pegawai->golongan,
-                    'pangkat' => $user->pegawai->pangkat,
-                    'tmt_cpns' => $user->pegawai->tmt_cpns,
-                ] : null,
-                'unit_kerja' => $unitKerja,
-            ],
-        ]);
+            'success' => false,
+            'message' => 'User tidak ditemukan'
+        ], 401);
     }
+
+    $pegawai = $user->pegawai;
+
+    $unitKerja = [];
+
+    if ($pegawai && $pegawai->keanggotaanTim) {
+        $unitKerja = $pegawai->keanggotaanTim
+            ->filter(fn ($kt) => $kt->unitKerja)
+            ->map(function ($kt) {
+                return [
+                    'id_unit' => $kt->unitKerja->id,
+                    'nama_unit' => $kt->unitKerja->nama_unit,
+                ];
+            })
+            ->values();
+    }
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'user' => [
+                'id_user' => $user->id_user,
+                'email' => $user->email,
+                'role' => $user->role,
+                'status' => $user->status,
+                'created_at' => $user->created_at,
+            ],
+            'pegawai' => $pegawai ? [
+                'id_pegawai' => $pegawai->id_pegawai,
+                'nip' => $pegawai->nip,
+                'nama' => $pegawai->nama,
+            ] : null,
+            'unit_kerja' => $unitKerja
+        ]
+    ]);
+}
 }
