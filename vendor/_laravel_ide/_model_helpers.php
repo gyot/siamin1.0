@@ -1378,6 +1378,8 @@ namespace App\Models {
      * @property int $id_pegawai
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
      * @property-read int|null $users_count
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\KeanggotaanTim> $keanggotaanTim
+     * @property-read int|null $keanggotaanTim_count
      * @method static \Illuminate\Database\Eloquent\Builder<Pegawai>|Pegawai whereIdPegawai($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Pegawai>|Pegawai whereNip($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Pegawai>|Pegawai whereNama($value)

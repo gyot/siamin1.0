@@ -89,9 +89,57 @@ class AuthController extends Controller
         return $this->attemptLogin($request, ['peserta']);
     }
 
+    // public function me(Request $request)
+    // {
+    //     $user = $request->user()->load('pegawai');
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => [
+    //             'user' => [
+    //                 'id_user' => $user->id_user,
+    //                 'email' => $user->email,
+    //                 'role' => $user->role,
+    //                 'status' => $user->status,
+    //                 'last_login' => $user->last_login,
+    //                 'created_at' => $user->created_at,
+    //             ],
+    //             'pegawai' => $user->pegawai ? [
+    //                 'id_pegawai' => $user->pegawai->id_pegawai,
+    //                 'nip' => $user->pegawai->nip,
+    //                 'nama' => $user->pegawai->nama,
+    //                 'tempat_lahir' => $user->pegawai->tempat_lahir,
+    //                 'tanggal_lahir' => $user->pegawai->tanggal_lahir,
+    //                 'nama_jabatan' => $user->pegawai->nama_jabatan,
+    //                 'golongan' => $user->pegawai->golongan,
+    //                 'pangkat' => $user->pegawai->pangkat,
+    //                 'tmt_cpns' => $user->pegawai->tmt_cpns,
+    //                 'pendidikan_terakhir' => $user->pegawai->pendidikan_terakhir,
+    //                 'status_kepegawaian' => $user->pegawai->status_kepegawaian,
+    //             ] : null,
+    //         ],
+    //     ]);
+    // }
+
     public function me(Request $request)
     {
-        $user = $request->user()->load('pegawai');
+        $user = $request->user()->load([
+            'pegawai.keanggotaanTim.unitKerja',
+        ]);
+
+        $unitKerja = [];
+
+        if ($user->pegawai) {
+            $unitKerja = $user->pegawai->keanggotaanTim
+                ->filter(fn ($kt) => $kt->unitKerja)
+                ->map(function ($kt) {
+                    return [
+                        'id_unit' => $kt->unitKerja->id,
+                        'nama_unit' => $kt->unitKerja->nama_unit,
+                    ];
+                })
+                ->values();
+        }
 
         return response()->json([
             'success' => true,
@@ -114,9 +162,8 @@ class AuthController extends Controller
                     'golongan' => $user->pegawai->golongan,
                     'pangkat' => $user->pegawai->pangkat,
                     'tmt_cpns' => $user->pegawai->tmt_cpns,
-                    'pendidikan_terakhir' => $user->pegawai->pendidikan_terakhir,
-                    'status_kepegawaian' => $user->pegawai->status_kepegawaian,
                 ] : null,
+                'unit_kerja' => $unitKerja,
             ],
         ]);
     }

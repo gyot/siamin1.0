@@ -62,4 +62,5 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Pegawai::class, 'id_pegawai', 'id_pegawai');
     }
+
 }

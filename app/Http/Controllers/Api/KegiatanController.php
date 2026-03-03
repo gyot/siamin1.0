@@ -91,6 +91,7 @@ class KegiatanController extends Controller
             ],
             'created_by' => 'sometimes|exists:users,id_user',
             'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
+            'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
         ]);
 
         if ($request->hasFile('flyer')) {
@@ -154,6 +155,7 @@ class KegiatanController extends Controller
             ],
             'created_by' => 'sometimes|nullable|exists:users,id_user',
             'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
+                'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
         ]);
 
         if ($request->hasFile('flyer')) {

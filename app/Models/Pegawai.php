@@ -10,8 +10,11 @@ class Pegawai extends Model
     use HasFactory;
 
     protected $table = 'pegawai';
+
     protected $primaryKey = 'id_pegawai';
+
     public $incrementing = true;
+
     protected $keyType = 'int';
 
     /**
@@ -45,5 +48,10 @@ class Pegawai extends Model
     public function users()
     {
         return $this->hasMany(User::class, 'id_pegawai', 'id_pegawai');
+    }
+
+    public function keanggotaanTim()
+    {
+        return $this->hasMany(KeanggotaanTim::class, 'id_pegawai', 'id_pegawai');
     }
 }
