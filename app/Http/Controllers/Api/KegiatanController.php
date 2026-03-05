@@ -74,7 +74,7 @@ class KegiatanController extends Controller
             'lokasi' => 'sometimes|string|max:255',
             // flyer must be an uploaded image file
             'flyer' => 'sometimes|file|image|max:10048',
-            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
+            // 'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
             'peserta_ringkasan' => 'sometimes|string|max:255',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [
@@ -99,10 +99,10 @@ class KegiatanController extends Controller
             $path = $request->file('flyer')->store('flyers', 'public');
             $validated['flyer'] = $path;
         }
-        if ($request->hasFile('template_biodata')) {
-            $path = $request->file('template_biodata')->store('template_biodata', 'public');
-            $validated['template_biodata'] = $path;
-        }
+        // if ($request->hasFile('template_biodata')) {
+        //     $path = $request->file('template_biodata')->store('template_biodata', 'public');
+        //     $validated['template_biodata'] = $path;
+        // }
 
         $kegiatan = Kegiatan::create($validated);
 
