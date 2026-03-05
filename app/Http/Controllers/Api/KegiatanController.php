@@ -73,8 +73,8 @@ class KegiatanController extends Controller
             'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
             'lokasi' => 'sometimes|string|max:255',
             // flyer must be an uploaded image file
-            'flyer' => 'sometimes|file|image|max:2048',
-            'template_biodata' => 'sometimes|file|mimes:pdf,doc,docx|max:5120',
+            'flyer' => 'sometimes|file|image|max:10048',
+            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
             'peserta_ringkasan' => 'sometimes|string|max:255',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [
