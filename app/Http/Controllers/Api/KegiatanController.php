@@ -132,19 +132,20 @@ class KegiatanController extends Controller
         }
 
         $validated = $request->validate([
-            'nama_kegiatan' => 'sometimes|nullable|string|max:255',
-            'rincian_kegiatan' => 'sometimes|nullable|string',
-            'dokumentasi_url' => 'sometimes|nullable|string',
-            'materi_url' => 'sometimes|nullable|string',
-            'panduan_url' => 'sometimes|nullable|string',
-            'laporan_url' => 'sometimes|nullable|string',
-            'surat_menyurat_url' => 'sometimes|nullable|string',
+            'nama_kegiatan' => 'sometimes|string|max:255',
+            'rincian_kegiatan' => 'sometimes|string',
+            'dokumentasi_url' => 'sometimes|url|max:255',
+            'materi_url' => 'sometimes|url|max:255',
+            'panduan_url' => 'sometimes|url|max:255',
+            'laporan_url' => 'sometimes|url|max:255',
+            'surat_menyurat_url' => 'sometimes|url|max:255',
             'tanggal_mulai' => 'sometimes|date',
             'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
-            'lokasi' => 'sometimes|nullable|string|max:255',
-            'flyer' => 'sometimes|nullable|image|max:2048',
-            'template_biodata' => 'sometimes|nullable|file|mimes:pdf,doc,docx|max:5120',
-            'peserta_ringkasan' => 'sometimes|nullable|string',
+            'lokasi' => 'sometimes|string|max:255',
+            // flyer must be an uploaded image file
+            'flyer' => 'sometimes|file|image|max:10048',
+            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
+            'peserta_ringkasan' => 'sometimes|string|max:255',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [
                 'sometimes',
