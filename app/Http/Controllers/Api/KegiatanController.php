@@ -74,7 +74,7 @@ class KegiatanController extends Controller
             'lokasi' => 'sometimes|string|max:255',
             // flyer must be an uploaded image file
             'flyer' => 'sometimes|file|image|max:2048',
-            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:5120',
+            'template_biodata' => 'sometimes|file|mimes:pdf,doc,docx|max:5120',
             'peserta_ringkasan' => 'sometimes|string|max:255',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [

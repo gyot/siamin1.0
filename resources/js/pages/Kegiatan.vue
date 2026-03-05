@@ -877,19 +877,28 @@ export default {
           formData.value.id_pegawai = currentUser.value.id_pegawai || currentUser.value.id || null
         }
 
-        let payload
-        if (flyerFile.value) {
-          payload = new FormData()
-          Object.keys(formData.value).forEach(key => {
-            if (key === 'flyer') return
-            const val = formData.value[key]
-            if (val !== null && val !== undefined) {
-              payload.append(key, val)
-            }
-          })
+        const payload = new FormData()
+        Object.keys(formData.value).forEach(key => {
+          if (key === 'flyer' || key === 'template_biodata') return
+          const val = formData.value[key]
+          if (val !== null && val !== undefined) {
+            payload.append(key, val)
+          }
+        })
+
+        // Only append file fields when they are real files.
+        if (flyerFile.value instanceof File) {
           payload.append('flyer', flyerFile.value)
-        } else {
-          payload = { ...formData.value }
+        } else if (editingId.value && formData.value.flyer === '') {
+          // Explicit clear on update
+          payload.append('flyer', '')
+        }
+
+        if (formData.value.template_biodata instanceof File) {
+          payload.append('template_biodata', formData.value.template_biodata)
+        } else if (editingId.value && formData.value.template_biodata === '') {
+          // Explicit clear on update
+          payload.append('template_biodata', '')
         }
 
         if (editingId.value) {
