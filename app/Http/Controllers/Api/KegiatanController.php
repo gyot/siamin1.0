@@ -74,6 +74,7 @@ class KegiatanController extends Controller
             'lokasi' => 'sometimes|string|max:255',
             // flyer must be an uploaded image file
             'flyer' => 'sometimes|file|image|max:2048',
+            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:5120',
             'peserta_ringkasan' => 'sometimes|string|max:255',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [
@@ -97,6 +98,10 @@ class KegiatanController extends Controller
         if ($request->hasFile('flyer')) {
             $path = $request->file('flyer')->store('flyers', 'public');
             $validated['flyer'] = $path;
+        }
+        if ($request->hasFile('template_biodata')) {
+            $path = $request->file('template_biodata')->store('template_biodata', 'public');
+            $validated['template_biodata'] = $path;
         }
 
         $kegiatan = Kegiatan::create($validated);
@@ -138,6 +143,7 @@ class KegiatanController extends Controller
             'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
             'lokasi' => 'sometimes|nullable|string|max:255',
             'flyer' => 'sometimes|nullable|image|max:2048',
+            'template_biodata' => 'sometimes|nullable|file|mimes:pdf,doc,docx|max:5120',
             'peserta_ringkasan' => 'sometimes|nullable|string',
             'total_peserta' => 'sometimes|integer|min:0',
             'metode_pembayaran' => [
@@ -167,6 +173,21 @@ class KegiatanController extends Controller
             unset($validated['flyer']);
         }
 
+        if ($request->hasFile('template_biodata')) {
+            if ($kegiatan->template_biodata && Storage::disk('public')->exists($kegiatan->template_biodata)) {
+                Storage::disk('public')->delete($kegiatan->template_biodata);
+            }
+            $path = $request->file('template_biodata')->store('template_biodata', 'public');
+            $validated['template_biodata'] = $path;
+        } elseif ($request->exists('template_biodata') && blank($request->input('template_biodata'))) {
+            if ($kegiatan->template_biodata && Storage::disk('public')->exists($kegiatan->template_biodata)) {
+                Storage::disk('public')->delete($kegiatan->template_biodata);
+            }
+            $validated['template_biodata'] = null;
+        } else {
+            unset($validated['template_biodata']);
+        }
+
         $kegiatan->update($validated);
 
         return response()->json(["success" => true, "data" => $kegiatan]);
@@ -180,6 +201,14 @@ class KegiatanController extends Controller
         $kegiatan = Kegiatan::find($id);
         if (!$kegiatan) {
             return response()->json(["success" => false, "message" => "Kegiatan not found"], 404);
+        }
+
+        if ($kegiatan->flyer && Storage::disk('public')->exists($kegiatan->flyer)) {
+            Storage::disk('public')->delete($kegiatan->flyer);
+        }
+
+        if ($kegiatan->template_biodata && Storage::disk('public')->exists($kegiatan->template_biodata)) {
+            Storage::disk('public')->delete($kegiatan->template_biodata);
         }
 
         $kegiatan->delete();
