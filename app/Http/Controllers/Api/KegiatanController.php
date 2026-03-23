@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kegiatan;
+use App\Models\KegiatanAtk;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class KegiatanController extends Controller
 {
@@ -16,7 +18,7 @@ class KegiatanController extends Controller
      */
     public function getAllKegiatan()
     {
-        $data = Kegiatan::orderBy('tanggal_mulai', 'desc')->get();
+        $data = $this->kegiatanQuery()->orderBy('tanggal_mulai', 'desc')->get();
         return response()->json(["success" => true, "data" => $data]);
     }
 
@@ -37,7 +39,7 @@ class KegiatanController extends Controller
         $user = auth()->user();
         $pegawaiId = $user?->id_pegawai;
 
-        $query = Kegiatan::orderBy('tanggal_mulai', 'desc');
+        $query = $this->kegiatanQuery()->orderBy('tanggal_mulai', 'desc');
 
         if ($pegawaiId) {
             $query->where(function ($q) use ($pegawaiId) {
@@ -61,50 +63,40 @@ class KegiatanController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nama_kegiatan' => 'sometimes|string|max:255',
-            'rincian_kegiatan' => 'sometimes|string',
-            'dokumentasi_url' => 'sometimes|url|max:255',
-            'materi_url' => 'sometimes|url|max:255',
-            'panduan_url' => 'sometimes|url|max:255',
-            'laporan_url' => 'sometimes|url|max:255',
-            'surat_menyurat_url' => 'sometimes|url|max:255',
-            'tanggal_mulai' => 'sometimes|date',
-            'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
-            'lokasi' => 'sometimes|string|max:255',
-            // flyer must be an uploaded image file
-            'flyer' => 'sometimes|file|image|max:10048',
-            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
-            'peserta_ringkasan' => 'sometimes|string|max:255',
-            'total_peserta' => 'sometimes|integer|min:0',
-            'metode_pembayaran' => [
-                'sometimes',
-                Rule::in(['transfer','pulsa','transfer_dan_pulsa','tunai','tidak_dibayar']),
-            ],
-            'deskripsi' => 'sometimes|string',
-            'metode_pelaksanaan' => [
-                'sometimes',
-                Rule::in(['daring','luring','hybrid']),
-            ],
-            'status' => [
-                'sometimes',
-                Rule::in(['draft','berjalan','selesai','dibatalkan']),
-            ],
-            'created_by' => 'sometimes|exists:users,id_user',
-            'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
-            'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
-        ]);
+        $validated = $request->validate($this->kegiatanRules(true));
+        $storedFiles = [];
 
         if ($request->hasFile('flyer')) {
             $path = $request->file('flyer')->store('flyers', 'public');
             $validated['flyer'] = $path;
+            $storedFiles[] = $path;
         }
         if ($request->hasFile('template_biodata')) {
             $path = $request->file('template_biodata')->store('template_biodata', 'public');
             $validated['template_biodata'] = $path;
+            $storedFiles[] = $path;
         }
 
-        $kegiatan = Kegiatan::create($validated);
+        try {
+            $kegiatan = DB::transaction(function () use ($validated) {
+                $atkItems = $validated['daftar_atk'] ?? [];
+                unset($validated['daftar_atk']);
+
+                $kegiatan = Kegiatan::create($validated);
+
+                $this->syncAtkRecords($kegiatan, $atkItems);
+
+                return $this->loadAtkRelation($kegiatan);
+            });
+        } catch (\Throwable $e) {
+            foreach ($storedFiles as $storedFile) {
+                if (Storage::disk('public')->exists($storedFile)) {
+                    Storage::disk('public')->delete($storedFile);
+                }
+            }
+
+            throw $e;
+        }
 
         return response()->json(["success" => true, "data" => $kegiatan], 201);
     }
@@ -114,7 +106,7 @@ class KegiatanController extends Controller
      */
     public function show($id)
     {
-        $kegiatan = Kegiatan::find($id);
+        $kegiatan = $this->kegiatanQuery()->find($id);
         if (!$kegiatan) {
             return response()->json(["success" => false, "message" => "Kegiatan not found"], 404);
         }
@@ -131,39 +123,7 @@ class KegiatanController extends Controller
             return response()->json(["success" => false, "message" => "Kegiatan yang anda cari tidak ditemukan"], 404);
         }
 
-        $validated = $request->validate([
-            'nama_kegiatan' => 'sometimes|string|max:255',
-            'rincian_kegiatan' => 'sometimes|string',
-            'dokumentasi_url' => 'sometimes|url|max:255',
-            'materi_url' => 'sometimes|url|max:255',
-            'panduan_url' => 'sometimes|url|max:255',
-            'laporan_url' => 'sometimes|url|max:255',
-            'surat_menyurat_url' => 'sometimes|url|max:255',
-            'tanggal_mulai' => 'sometimes|date',
-            'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
-            'lokasi' => 'sometimes|string|max:255',
-            // flyer must be an uploaded image file
-            'flyer' => 'sometimes|file|image|max:10048',
-            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
-            'peserta_ringkasan' => 'sometimes|string|max:255',
-            'total_peserta' => 'sometimes|integer|min:0',
-            'metode_pembayaran' => [
-                'sometimes',
-                Rule::in(['transfer','pulsa','transfer_dan_pulsa','tunai','tidak_dibayar']),
-            ],
-            'deskripsi' => 'sometimes|nullable|string',
-            'metode_pelaksanaan' => [
-                'sometimes',
-                Rule::in(['daring','luring','hybrid']),
-            ],
-            'status' => [
-                'sometimes',
-                Rule::in(['draft','berjalan','selesai','dibatalkan']),
-            ],
-            'created_by' => 'sometimes|nullable|exists:users,id_user',
-            'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
-                'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
-        ]);
+        $validated = $request->validate($this->kegiatanRules(false));
 
         if ($request->hasFile('flyer')) {
             $path = $request->file('flyer')->store('flyers', 'public');
@@ -189,9 +149,19 @@ class KegiatanController extends Controller
             unset($validated['template_biodata']);
         }
 
-        $kegiatan->update($validated);
+        DB::transaction(function () use ($kegiatan, $validated, $request) {
+            $atkItemsProvided = $request->has('daftar_atk');
+            $atkItems = $validated['daftar_atk'] ?? [];
+            unset($validated['daftar_atk']);
 
-        return response()->json(["success" => true, "data" => $kegiatan]);
+            $kegiatan->update($validated);
+
+            if ($atkItemsProvided) {
+                $this->syncAtkRecords($kegiatan, $atkItems);
+            }
+        });
+
+        return response()->json(["success" => true, "data" => $this->loadAtkRelation($kegiatan)]);
     }
 
     /**
@@ -214,5 +184,110 @@ class KegiatanController extends Controller
 
         $kegiatan->delete();
         return response()->json(["success" => true, "message" => "Deleted successfully"]);
+    }
+
+    private function kegiatanRules(bool $isStore): array
+    {
+        $requiredRule = $isStore ? 'required' : 'sometimes';
+
+        return [
+            'nama_kegiatan' => 'sometimes|string|max:255',
+            'rincian_kegiatan' => 'sometimes|string',
+            'dokumentasi_url' => 'sometimes|url|max:255',
+            'materi_url' => 'sometimes|url|max:255',
+            'panduan_url' => 'sometimes|url|max:255',
+            'laporan_url' => 'sometimes|url|max:255',
+            'surat_menyurat_url' => 'sometimes|url|max:255',
+            'tanggal_mulai' => 'sometimes|date',
+            'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
+            'lokasi' => 'sometimes|string|max:255',
+            'flyer' => 'sometimes|file|image|max:10048',
+            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
+            'peserta_ringkasan' => 'sometimes|string',
+            'total_peserta' => 'sometimes|integer|min:0',
+            'metode_pembayaran' => [
+                'sometimes',
+                Rule::in(['transfer','pulsa','transfer_dan_pulsa','tunai','tidak_dibayar']),
+            ],
+            'deskripsi' => 'sometimes|nullable|string',
+            'metode_pelaksanaan' => [
+                'sometimes',
+                Rule::in(['daring','luring','hybrid']),
+            ],
+            'status' => [
+                'sometimes',
+                Rule::in(['draft','berjalan','selesai','dibatalkan']),
+            ],
+            'created_by' => 'sometimes|nullable|exists:users,id_user',
+            'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
+            'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
+            'daftar_atk' => 'sometimes|array',
+            'daftar_atk.*.nama_barang' => [$requiredRule, 'string', 'max:255'],
+            'daftar_atk.*.spesifikasi' => 'sometimes|nullable|string|max:255',
+            'daftar_atk.*.jumlah' => 'sometimes|integer|min:1',
+            'daftar_atk.*.satuan' => 'sometimes|nullable|string|max:100',
+            'daftar_atk.*.keterangan' => 'sometimes|nullable|string',
+        ];
+    }
+
+    private function syncAtkRecords(Kegiatan $kegiatan, array $atkItems): void
+    {
+        if (!$this->hasAtkTable()) {
+            return;
+        }
+
+        $kegiatan->daftarAtk()->delete();
+
+        if (empty($atkItems)) {
+            return;
+        }
+
+        $payload = collect($atkItems)->map(function ($item) use ($kegiatan) {
+            return [
+                'id_kegiatan' => $kegiatan->id_kegiatan,
+                'nama_barang' => $item['nama_barang'],
+                'spesifikasi' => $item['spesifikasi'] ?? null,
+                'jumlah' => $item['jumlah'] ?? 1,
+                'satuan' => $item['satuan'] ?? null,
+                'keterangan' => $item['keterangan'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        })->all();
+
+        KegiatanAtk::insert($payload);
+    }
+
+    private function kegiatanQuery()
+    {
+        $query = Kegiatan::query();
+
+        if ($this->hasAtkTable()) {
+            $query->with('daftarAtk');
+        }
+
+        return $query;
+    }
+
+    private function loadAtkRelation(Kegiatan $kegiatan): Kegiatan
+    {
+        if ($this->hasAtkTable()) {
+            return $kegiatan->load('daftarAtk');
+        }
+
+        $kegiatan->setRelation('daftarAtk', collect());
+
+        return $kegiatan;
+    }
+
+    private function hasAtkTable(): bool
+    {
+        static $hasAtkTable = null;
+
+        if ($hasAtkTable === null) {
+            $hasAtkTable = Schema::hasTable('kegiatan_atk');
+        }
+
+        return $hasAtkTable;
     }
 }

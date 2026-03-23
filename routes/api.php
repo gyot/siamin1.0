@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\{
     UserController,
     PegawaiController,
     KegiatanController,
+    KegiatanAtkController,
     PesertaController,
     SertifikatController,
     AkunPesertaController,
@@ -30,6 +31,7 @@ Route::prefix('v1')->group(function () {
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::apiResource('kegiatan', KegiatanController::class);
+    Route::apiResource('kegiatan-atk', KegiatanAtkController::class);
     Route::apiResource('peserta', PesertaController::class);
     Route::apiResource('unit-kerja', UnitKerjaController::class);
     Route::get('unit-kerja/user/{id}', [UnitKerjaController::class, 'unit_user']);

@@ -9,6 +9,7 @@ use App\Models\Pegawai;
 use App\Models\User;
 use App\Models\SuratTugas;
 use App\Models\SuratTugasPegawai;
+use App\Models\KegiatanAtk;
 
 class Kegiatan extends Model
 {
@@ -61,6 +62,11 @@ class Kegiatan extends Model
     public function suratTugas()
     {
         return $this->hasMany(SuratTugas::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function daftarAtk()
+    {
+        return $this->hasMany(KegiatanAtk::class, 'id_kegiatan', 'id_kegiatan');
     }
 
     /**
