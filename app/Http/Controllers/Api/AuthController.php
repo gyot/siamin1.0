@@ -7,6 +7,7 @@ use App\Models\KeanggotaanTim;
 use App\Models\UnitKerja;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -55,21 +56,28 @@ class AuthController extends Controller
 
         $identity = $request->email;
         $field = filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'user';
+        $allowedRoles = collect($roles)
+            ->map(fn ($role) => $this->normalizeRole($role))
+            ->unique()
+            ->values();
 
         $user = User::with('pegawai')
             ->where($field, $identity)
-            ->whereIn('role', $roles)
             ->where('status', 'aktif')
             ->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (
+            ! $user
+            || ! $allowedRoles->contains($this->normalizeRole($user->role))
+            || ! Hash::check($request->password, $user->password)
+        ) {
             throw ValidationException::withMessages([
                 'email' => ['Email/username atau password tidak valid.'],
             ]);
         }
 
         // $user->update(['last_login' => now()]);
-        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $user->unit_kerja_id ?? null);
+        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $this->getRawUnitKerjaId($user));
 
         return response()->json([
             'success' => true,
@@ -86,7 +94,7 @@ class AuthController extends Controller
 
     public function loginAdmin(Request $request)
     {
-        return $this->attemptLogin($request, ['admin', 'operator', 'verifikator', 'kepala']);
+        return $this->attemptLogin($request, ['admin', 'super_admin', 'operator', 'verifikator', 'kepala']);
     }
 
     public function loginPeserta(Request $request)
@@ -97,7 +105,7 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user()->load('pegawai');
-        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $user->unit_kerja_id ?? null);
+        $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $this->getRawUnitKerjaId($user));
 
         return response()->json([
             'success' => true,
@@ -203,6 +211,32 @@ class AuthController extends Controller
         return collect(explode(',', $raw))
             ->map(fn ($v) => trim((string) $v))
             ->filter();
+    }
+
+    private function normalizeRole(?string $role): string
+    {
+        return str_replace([' ', '-'], '_', strtolower(trim((string) $role)));
+    }
+
+    private function getRawUnitKerjaId(User $user)
+    {
+        if (array_key_exists('unit_kerja_id', $user->getAttributes())) {
+            return $user->getAttributes()['unit_kerja_id'];
+        }
+
+        static $hasUnitKerjaColumn;
+
+        if ($hasUnitKerjaColumn === null) {
+            $hasUnitKerjaColumn = DB::getSchemaBuilder()->hasColumn($user->getTable(), 'unit_kerja_id');
+        }
+
+        if (! $hasUnitKerjaColumn) {
+            return null;
+        }
+
+        return User::query()
+            ->whereKey($user->getKey())
+            ->value('unit_kerja_id');
     }
 
     // public function me(Request $request)

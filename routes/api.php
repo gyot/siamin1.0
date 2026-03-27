@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\{
     UserController,
     PegawaiController,
     KegiatanController,
+    EvaluasiController,
     KegiatanAtkController,
     PesertaController,
     SertifikatController,
@@ -30,11 +31,15 @@ Route::prefix('v1')->group(function () {
     // KEGIATAN & PESERTA TANPA LOGIN
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
+    Route::get('kegiatan/tim_kegiatan/{id}', [KegiatanController::class, 'getAllKegiatanTimKegiatan']);
     Route::apiResource('kegiatan', KegiatanController::class);
     Route::apiResource('kegiatan-atk', KegiatanAtkController::class);
     Route::apiResource('peserta', PesertaController::class);
     Route::apiResource('unit-kerja', UnitKerjaController::class);
     Route::get('unit-kerja/user/{id}', [UnitKerjaController::class, 'unit_user']);
+    Route::post('evaluasi', [EvaluasiController::class, 'store']);
+    Route::get('evaluasi/check/{id_kegiatan}', [EvaluasiController::class, 'check']);
+    Route::get('evaluasi/{id_kegiatan}/statistik', [EvaluasiController::class, 'statistik']);
     
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
@@ -48,6 +53,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('surat-tugas', SuratTugasController::class);
         Route::apiResource('surat-tugas-pegawai', SuratTugasPegawaiController::class);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
+        Route::get('evaluasi/{id_kegiatan}', [EvaluasiController::class, 'indexByKegiatan']);
 
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);

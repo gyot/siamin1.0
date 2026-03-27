@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\SuratTugas;
 use App\Models\SuratTugasPegawai;
 use App\Models\KegiatanAtk;
+use App\Models\Evaluasi;
 
 class Kegiatan extends Model
 {
@@ -67,6 +68,11 @@ class Kegiatan extends Model
     public function daftarAtk()
     {
         return $this->hasMany(KegiatanAtk::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function evaluasi()
+    {
+        return $this->hasMany(Evaluasi::class, 'id_kegiatan', 'id_kegiatan');
     }
 
     /**
