@@ -39,7 +39,7 @@ class KegiatanController extends Controller
         $data = DB::table('kegiatan')
             ->where('kegiatan.unit_kerja_id', $id)
             ->orderBy('kegiatan.tanggal_mulai', 'desc')
-            ->get();
+            ->paginate(20);
 
         return response()->json(["success" => true, "data" => $data]);
     }
@@ -69,7 +69,7 @@ class KegiatanController extends Controller
             $query->whereRaw('0 = 1');
         }
 
-        $data = $query->get();
+        $data = $query->paginate(20);
 
         return response()->json(["success" => true, "data" => $data]);
     }
