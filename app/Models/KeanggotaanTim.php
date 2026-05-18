@@ -30,6 +30,11 @@ class KeanggotaanTim extends Model
         return $this->belongsTo(UnitKerja::class, 'unit_kerja_id', 'id');
     }
 
+    public function unitKerja()
+    {
+        return $this->unit();
+    }
+
     public function subUnit()
     {
         return $this->belongsTo(SubUnitKerja::class, 'sub_unit_kerja_id', 'id');

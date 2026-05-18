@@ -115,6 +115,7 @@ curl -X POST "http://127.0.0.1:8000/api/v1/login" \
 ## API Documentation
 
 Lihat [API_DOCUMENTATION.md](API_DOCUMENTATION.md) untuk dokumentasi lengkap semua endpoints.
+Untuk penyesuaian frontend setelah perbaikan backend, lihat [FRONTEND_API_ADJUSTMENTS.md](FRONTEND_API_ADJUSTMENTS.md).
 
 ## Available Test Accounts
 

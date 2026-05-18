@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\{
+    DashboardController,
     UserController,
     PegawaiController,
     KegiatanController,
@@ -40,6 +41,7 @@ Route::prefix('v1')->group(function () {
     Route::post('evaluasi', [EvaluasiController::class, 'store']);
     Route::get('evaluasi/check/{id_kegiatan}', [EvaluasiController::class, 'check']);
     Route::get('evaluasi/{id_kegiatan}/statistik', [EvaluasiController::class, 'statistik']);
+    Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {

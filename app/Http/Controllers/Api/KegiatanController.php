@@ -3,23 +3,29 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\DashboardKegiatanIndexRequest;
+use App\Http\Resources\DashboardKegiatanCollection;
+use App\Models\KeanggotaanTim;
 use App\Models\Kegiatan;
 use App\Models\KegiatanAtk;
+use App\Services\DashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class KegiatanController extends Controller
 {
     /**
      * Display all kegiatan without filter
      */
-    public function getAllKegiatan()
+    public function getAllKegiatan(DashboardKegiatanIndexRequest $request, DashboardService $dashboardService)
     {
-        $data = $this->kegiatanQuery()->orderBy('tanggal_mulai', 'desc')->get();
-        return response()->json(["success" => true, "data" => $data]);
+        $paginator = $dashboardService->paginateKegiatanForDashboard($request->validated());
+
+        return response()->json((new DashboardKegiatanCollection($paginator))->response()->getData(true));
     }
 
     public function getAllKegiatanTim($id)
@@ -74,6 +80,7 @@ class KegiatanController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate($this->kegiatanRules(true));
+        $validated = $this->prepareKegiatanPayload($request, $validated);
         $storedFiles = [];
 
         if ($request->hasFile('flyer')) {
@@ -134,6 +141,7 @@ class KegiatanController extends Controller
         }
 
         $validated = $request->validate($this->kegiatanRules(false));
+        $validated = $this->prepareKegiatanPayload($request, $validated, $kegiatan);
 
         if ($request->hasFile('flyer')) {
             $path = $request->file('flyer')->store('flyers', 'public');
@@ -201,16 +209,16 @@ class KegiatanController extends Controller
         $requiredRule = $isStore ? 'required' : 'sometimes';
 
         return [
-            'nama_kegiatan' => 'sometimes|string|max:255',
+            'nama_kegiatan' => [$requiredRule, 'string', 'max:255'],
             'rincian_kegiatan' => 'sometimes|string',
             'dokumentasi_url' => 'sometimes|url|max:255',
             'materi_url' => 'sometimes|url|max:255',
             'panduan_url' => 'sometimes|url|max:255',
             'laporan_url' => 'sometimes|url|max:255',
             'surat_menyurat_url' => 'sometimes|url|max:255',
-            'tanggal_mulai' => 'sometimes|date',
-            'tanggal_selesai' => 'sometimes|date|after_or_equal:tanggal_mulai',
-            'lokasi' => 'sometimes|string|max:255',
+            'tanggal_mulai' => [$requiredRule, 'date'],
+            'tanggal_selesai' => [$requiredRule, 'date', 'after_or_equal:tanggal_mulai'],
+            'lokasi' => [$requiredRule, 'string', 'max:255'],
             'flyer' => 'sometimes|file|image|max:10048',
             'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
             'peserta_ringkasan' => 'sometimes|string',
@@ -225,11 +233,11 @@ class KegiatanController extends Controller
                 Rule::in(['daring','luring','hybrid']),
             ],
             'status' => [
-                'sometimes',
+                $requiredRule,
                 Rule::in(['draft','berjalan','selesai','dibatalkan']),
             ],
             'created_by' => 'sometimes|nullable|exists:users,id_user',
-            'id_pegawai' => 'sometimes|nullable|exists:pegawai,id_pegawai',
+            'id_pegawai' => [$requiredRule, 'nullable', 'exists:pegawai,id_pegawai'],
             'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
             'daftar_atk' => 'sometimes|array',
             'daftar_atk.*.nama_barang' => [$requiredRule, 'string', 'max:255'],
@@ -299,5 +307,57 @@ class KegiatanController extends Controller
         }
 
         return $hasAtkTable;
+    }
+
+    private function prepareKegiatanPayload(Request $request, array $validated, ?Kegiatan $existing = null): array
+    {
+        $validated['id_pegawai'] = $validated['id_pegawai']
+            ?? $existing?->id_pegawai
+            ?? $request->user()?->id_pegawai;
+
+        if (array_key_exists('created_by', $validated) === false && $request->user()) {
+            $validated['created_by'] = $request->user()->getKey();
+        }
+
+        if (!empty($validated['unit_kerja_id'])) {
+            return $validated;
+        }
+
+        if ($existing?->unit_kerja_id) {
+            $validated['unit_kerja_id'] = $existing->unit_kerja_id;
+
+            return $validated;
+        }
+
+        $pegawaiId = $validated['id_pegawai'] ?? null;
+
+        if (!$pegawaiId) {
+            throw ValidationException::withMessages([
+                'id_pegawai' => ['ID pegawai wajib dikirim untuk menyimpan kegiatan.'],
+            ]);
+        }
+
+        $unitKerjaIds = KeanggotaanTim::query()
+            ->where('id_pegawai', $pegawaiId)
+            ->pluck('unit_kerja_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($unitKerjaIds->count() === 1) {
+            $validated['unit_kerja_id'] = (int) $unitKerjaIds->first();
+
+            return $validated;
+        }
+
+        if ($unitKerjaIds->count() > 1) {
+            throw ValidationException::withMessages([
+                'unit_kerja_id' => ['Pegawai memiliki lebih dari satu unit kerja. Frontend wajib mengirim unit_kerja_id.'],
+            ]);
+        }
+
+        throw ValidationException::withMessages([
+            'unit_kerja_id' => ['Unit kerja tidak ditemukan untuk pegawai ini. Frontend wajib mengirim unit_kerja_id yang valid.'],
+        ]);
     }
 }
