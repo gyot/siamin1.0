@@ -21,7 +21,7 @@ abstract class BaseApiController extends Controller
      */
     protected $rules = [];
 
-    public function index()
+    public function index(Request $request)
     {
         $data = ($this->modelClass)::all();
         return response()->json(['success' => true, 'data' => $data]);

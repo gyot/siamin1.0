@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 use App\Models\Pegawai;
 use App\Models\User;
-use App\Models\SuratTugas;
-use App\Models\SuratTugasPegawai;
+use App\Models\PenugasanPegawai;
 use App\Models\KegiatanAtk;
 use App\Models\Evaluasi;
 
@@ -57,14 +56,6 @@ class Kegiatan extends Model
         return $this->belongsTo(User::class, 'created_by', 'id_user');
     }
 
-    /**
-     * Kegiatan may have multiple surat tugas documents.
-     */
-    public function suratTugas()
-    {
-        return $this->hasMany(SuratTugas::class, 'id_kegiatan', 'id_kegiatan');
-    }
-
     public function daftarAtk()
     {
         return $this->hasMany(KegiatanAtk::class, 'id_kegiatan', 'id_kegiatan');
@@ -75,19 +66,8 @@ class Kegiatan extends Model
         return $this->hasMany(Evaluasi::class, 'id_kegiatan', 'id_kegiatan');
     }
 
-    /**
-     * Shortcut to access all pegawai entries attached to this kegiatan through surat tugas.
-     */
-    public function suratTugasPegawais()
+    public function penugasanPegawais()
     {
-        // hasManyThrough(Target, Through, firstKey, secondKey, localKey, secondLocalKey)
-        return $this->hasManyThrough(
-            SuratTugasPegawai::class,
-            SuratTugas::class,
-            'id_kegiatan',        // FK on surat_tugas table
-            'id_surat_tugas',     // FK on surat_tugas_pegawai table
-            'id_kegiatan',        // Local key on kegiatan
-            'id_surat_tugas'      // Local key on surat_tugas
-        );
+        return $this->hasMany(PenugasanPegawai::class, 'id_kegiatan', 'id_kegiatan');
     }
 }

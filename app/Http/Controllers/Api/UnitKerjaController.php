@@ -12,7 +12,7 @@ class UnitKerjaController extends BaseApiController
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $data = UnitKerja::where('kode_unit', '!=', '000')->get();
     

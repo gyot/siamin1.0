@@ -14,10 +14,24 @@ class PesertaController extends BaseApiController
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $data = Peserta::with('kegiatan')->orderBy('created_at', 'desc')->get();
-        return response()->json(['success' => true, 'data' => $data]);
+        // $data = Peserta::with('kegiatan')->orderBy('created_at', 'desc')->get();
+        // return response()->json(['success' => true, 'data' => $data]);
+
+        $query = Peserta::with('kegiatan')
+        ->orderBy('created_at', 'desc');
+
+        if ($request->filled('kegiatan_id')) {
+            $query->where('id_kegiatan', $request->kegiatan_id);
+        }
+
+        $data = $query->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
     }
 
     /**
@@ -187,4 +201,3 @@ class PesertaController extends BaseApiController
         return response()->json(['success' => true, 'message' => 'Peserta deleted successfully']);
     }
 }
-

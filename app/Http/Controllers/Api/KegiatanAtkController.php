@@ -18,12 +18,12 @@ class KegiatanAtkController extends BaseApiController
         'keterangan' => 'sometimes|nullable|string',
     ];
 
-    public function index()
+    public function index(Request $request)
     {
         $query = KegiatanAtk::with('kegiatan')->latest();
 
-        if (request()->filled('id_kegiatan')) {
-            $query->where('id_kegiatan', request('id_kegiatan'));
+        if ($request->filled('id_kegiatan')) {
+            $query->where('id_kegiatan', $request->input('id_kegiatan'));
         }
 
         return response()->json([

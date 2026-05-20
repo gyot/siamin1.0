@@ -30,7 +30,34 @@ class KegiatanController extends Controller
 
     public function getAllKegiatanTim($id)
     {
-        $data = DB::table('kegiatan_tim')->where('unit_kerja_id', $id)->orderBy('tanggal_mulai', 'desc')->get();
+        $user = auth('sanctum')->user();
+        $pegawaiId = $user?->id_pegawai;
+
+        if (!$pegawaiId) {
+            return response()->json(["success" => false, "message" => "Unauthenticated."], 401);
+        }
+
+        $isAnggotaUnit = KeanggotaanTim::query()
+            ->where('id_pegawai', $pegawaiId)
+            ->where('unit_kerja_id', $id)
+            ->exists();
+
+        $query = DB::table('kegiatan_tim')
+            ->where('kegiatan_tim.unit_kerja_id', $id);
+
+        if (!$isAnggotaUnit) {
+            $query->whereExists(function ($subQuery) use ($pegawaiId) {
+                $subQuery->select(DB::raw(1))
+                    ->from('penugasan_pegawai')
+                    ->whereColumn('penugasan_pegawai.id_kegiatan', 'kegiatan_tim.id_kegiatan')
+                    ->where('penugasan_pegawai.id_pegawai', $pegawaiId);
+            });
+        }
+
+        $data = $query
+            ->orderBy('kegiatan_tim.tanggal_mulai', 'desc')
+            ->get();
+
         return response()->json(["success" => true, "data" => $data]);
     }
 
@@ -51,8 +78,8 @@ class KegiatanController extends Controller
     {
         // Show kegiatan where:
         // 1. kegiatan.id_pegawai = logged-in pegawai, OR
-        // 2. logged-in pegawai appears in surat_tugas_pegawai
-        $user = auth()->user();
+        // 2. logged-in pegawai appears in penugasan_pegawai
+        $user = auth('sanctum')->user();
         $pegawaiId = $user?->id_pegawai;
 
         $query = $this->kegiatanQuery()->orderBy('tanggal_mulai', 'desc');
@@ -60,7 +87,7 @@ class KegiatanController extends Controller
         if ($pegawaiId) {
             $query->where(function ($q) use ($pegawaiId) {
                 $q->where('id_pegawai', $pegawaiId)
-                  ->orWhereHas('suratTugasPegawais', function ($subQ) use ($pegawaiId) {
+                  ->orWhereHas('penugasanPegawais', function ($subQ) use ($pegawaiId) {
                       $subQ->where('id_pegawai', $pegawaiId);
                   });
             });

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\{
     DashboardController,
     UserController,
     PegawaiController,
+    PenugasanPegawaiController,
     KegiatanController,
     EvaluasiController,
     KegiatanAtkController,
@@ -14,8 +15,6 @@ use App\Http\Controllers\Api\{
     AkunPesertaController,
     KeanggotaanTimController,
     LogAktivitasController,
-    SuratTugasController,
-    SuratTugasPegawaiController,
     UnitKerjaController,
     SubUnitKerjaController
 };
@@ -52,8 +51,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
-        Route::apiResource('surat-tugas', SuratTugasController::class);
-        Route::apiResource('surat-tugas-pegawai', SuratTugasPegawaiController::class);
+        Route::apiResource('penugasan-pegawai', PenugasanPegawaiController::class);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
         Route::get('evaluasi/{id_kegiatan}', [EvaluasiController::class, 'indexByKegiatan']);
 
