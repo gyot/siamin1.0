@@ -246,6 +246,7 @@ class KegiatanController extends Controller
             'tanggal_mulai' => [$requiredRule, 'date'],
             'tanggal_selesai' => [$requiredRule, 'date', 'after_or_equal:tanggal_mulai'],
             'lokasi' => [$requiredRule, 'string', 'max:255'],
+            'kabupaten_kota' => 'sometimes|string|max:255',
             'flyer' => 'sometimes|file|image|max:10048',
             'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
             'peserta_ringkasan' => 'sometimes|string',

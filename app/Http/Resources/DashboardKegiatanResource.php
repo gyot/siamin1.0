@@ -15,6 +15,7 @@ class DashboardKegiatanResource extends JsonResource
             'tanggal_mulai' => $this->tanggal_mulai,
             'tanggal_selesai' => $this->tanggal_selesai,
             'lokasi' => $this->lokasi,
+            'kabupaten_kota' => $this->kabupaten_kota,
             'status' => $this->status,
             'total_peserta' => $this->total_peserta,
             'peserta_ringkasan' => $this->peserta_ringkasan,

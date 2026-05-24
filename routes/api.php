@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
         Route::apiResource('penugasan-pegawai', PenugasanPegawaiController::class);
+        Route::get('penugasan-pegawai-detailed', [PenugasanPegawaiController::class, 'indexWithDetails']);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
         Route::get('evaluasi/{id_kegiatan}', [EvaluasiController::class, 'indexByKegiatan']);
 

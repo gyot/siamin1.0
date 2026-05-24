@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\PenugasanPegawai;
+use App\Http\Resources\PenugasanDetailResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -40,6 +41,76 @@ class PenugasanPegawaiController extends BaseApiController
         $data = $query->get();
 
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    /**
+     * Get penugasan data with details (pagination enabled)
+     * Includes pegawai name, kegiatan details, dates, and location
+     */
+    public function indexWithDetails(Request $request)
+    {
+        $perPage = $request->input('per_page', 15);
+        $perPage = min((int) $perPage, 100); // Max 100 items per page
+
+        $query = PenugasanPegawai::with([
+            'pegawai:id_pegawai,nama',
+            'kegiatan:id_kegiatan,nama_kegiatan,tanggal_mulai,tanggal_selesai,kabupaten_kota,lokasi'
+        ]);
+
+        // Optional filters
+        if ($request->filled('id_kegiatan')) {
+            $query->where('id_kegiatan', $request->input('id_kegiatan'));
+        }
+
+        if ($request->filled('id_pegawai')) {
+            $query->where('id_pegawai', $request->input('id_pegawai'));
+        }
+
+        if ($request->filled('peran')) {
+            $query->where('peran', $request->input('peran'));
+        }
+
+        // Search by pegawai name or kegiatan name
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('pegawai', function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%");
+            })->orWhereHas('kegiatan', function ($q) use ($search) {
+                $q->where('nama_kegiatan', 'like', "%{$search}%");
+            });
+        }
+
+        // Sort options
+        $sortBy = $request->input('sort_by', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        // Validate sort_order to prevent injection
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        if ($sortBy === 'tanggal_mulai') {
+            $query->leftJoin('kegiatan', 'penugasan_pegawai.id_kegiatan', '=', 'kegiatan.id_kegiatan')
+                  ->select('penugasan_pegawai.*')
+                  ->orderBy('kegiatan.tanggal_mulai', $sortOrder);
+        } else {
+            $query->orderBy("penugasan_pegawai.{$sortBy}", $sortOrder);
+        }
+
+        $data = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => PenugasanDetailResource::collection($data),
+            'pagination' => [
+                'total' => $data->total(),
+                'per_page' => $data->perPage(),
+                'current_page' => $data->currentPage(),
+                'last_page' => $data->lastPage(),
+                'from' => $data->firstItem(),
+                'to' => $data->lastItem(),
+            ],
+        ]);
     }
 
     public function store(Request $request)

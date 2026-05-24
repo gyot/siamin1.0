@@ -33,6 +33,7 @@ class Kegiatan extends Model
         'tanggal_mulai',
         'tanggal_selesai',
         'lokasi',
+        'kabupaten_kota',
         'flyer',
         'template_biodata',
         'peserta_ringkasan',
