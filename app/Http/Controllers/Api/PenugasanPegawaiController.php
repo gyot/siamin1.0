@@ -14,7 +14,13 @@ class PenugasanPegawaiController extends BaseApiController
     protected $modelClass = PenugasanPegawai::class;
 
     protected array $peranOptions = [
-        
+        'penanggung_jawab',
+        'ketua_panitia',
+        'sekretaris_panitia',
+        'penitia',
+        'narasumber',
+        'peserta',
+        'pendamping',
     ];
 
     public function peran()
