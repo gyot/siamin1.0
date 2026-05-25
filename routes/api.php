@@ -29,6 +29,7 @@ Route::prefix('v1')->group(function () {
 
 
     // KEGIATAN & PESERTA TANPA LOGIN
+    Route::get('kegiatan/statistik', [KegiatanController::class, 'statistik']);
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::get('kegiatan/tim_kegiatan/{id}', [KegiatanController::class, 'getAllKegiatanTimKegiatan']);

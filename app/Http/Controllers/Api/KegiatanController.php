@@ -21,6 +21,12 @@ class KegiatanController extends Controller
     /**
      * Display all kegiatan without filter
      */
+    public function statistik()
+    {
+        $data = DB::table('info_dashboard')->get();
+
+        return response()->json(["success" => true, "data" => $data]);
+    }
     public function getAllKegiatan(DashboardKegiatanIndexRequest $request, DashboardService $dashboardService)
     {
         $paginator = $dashboardService->paginateKegiatanForDashboard($request->validated());
