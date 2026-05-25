@@ -20,7 +20,7 @@ class PenugasanPegawaiController extends BaseApiController
     public function peran()
     {
         $column = DB::table('peran')->get();
-        $this->peranOptions = $column->pluck('value')->toArray();
+        $this->peranOptions = $column->toArray();
         return response()->json([
             'success' => true,
             'data' => $column,
