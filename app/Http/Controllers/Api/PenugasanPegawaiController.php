@@ -188,7 +188,7 @@ class PenugasanPegawaiController extends BaseApiController
         return [
             'id_kegiatan' => 'required|exists:kegiatan,id_kegiatan',
             'id_pegawai' => 'required|exists:pegawai,id_pegawai',
-            'peran' => ['sometimes', 'nullable', Rule::in($this->peranOptions)],
+            'peran' => ['sometimes', 'nullable'],
         ];
     }
 
@@ -197,7 +197,7 @@ class PenugasanPegawaiController extends BaseApiController
         return [
             'id_kegiatan' => 'sometimes|exists:kegiatan,id_kegiatan',
             'id_pegawai' => 'sometimes|exists:pegawai,id_pegawai',
-            'peran' => ['sometimes', 'nullable', Rule::in($this->peranOptions)],
+            'peran' => ['sometimes', 'nullable'],
         ];
     }
 
