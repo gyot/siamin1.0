@@ -43,6 +43,7 @@ Route::prefix('v1')->group(function () {
     Route::get('evaluasi/check/{id_kegiatan}', [EvaluasiController::class, 'check']);
     Route::get('evaluasi/{id_kegiatan}/statistik', [EvaluasiController::class, 'statistik']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {

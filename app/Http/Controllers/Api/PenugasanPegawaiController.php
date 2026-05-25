@@ -7,19 +7,25 @@ use App\Http\Resources\PenugasanDetailResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class PenugasanPegawaiController extends BaseApiController
 {
     protected $modelClass = PenugasanPegawai::class;
 
     protected array $peranOptions = [
-        'penanggung_jawab',
-        'ketua_panitia',
-        'panitia',
-        'peserta',
-        'narasumber',
+        
     ];
 
+    public function peran()
+    {
+        $column = DB::table('peran')->get();
+        $this->peranOptions = $column->pluck('value')->toArray();
+        return response()->json([
+            'success' => true,
+            'data' => $column,
+        ]);
+    }
     protected $rules = [
         'id_kegiatan' => 'required|exists:kegiatan,id_kegiatan',
         'id_pegawai' => 'required|exists:pegawai,id_pegawai',
