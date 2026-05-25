@@ -33,6 +33,7 @@ Route::prefix('v1')->group(function () {
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::get('kegiatan/tim_kegiatan/{id}', [KegiatanController::class, 'getAllKegiatanTimKegiatan']);
+    Route::get('kegiatan/tim-saya', [KegiatanController::class, 'getKegiatanTimSaya'])->middleware('auth:sanctum');
     Route::apiResource('kegiatan', KegiatanController::class);
     Route::apiResource('kegiatan-atk', KegiatanAtkController::class);
     Route::apiResource('peserta', PesertaController::class);

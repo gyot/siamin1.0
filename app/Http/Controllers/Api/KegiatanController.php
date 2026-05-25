@@ -8,6 +8,7 @@ use App\Http\Resources\DashboardKegiatanCollection;
 use App\Models\KeanggotaanTim;
 use App\Models\Kegiatan;
 use App\Models\KegiatanAtk;
+use App\Models\UnitKerja;
 use App\Services\DashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -75,6 +76,38 @@ class KegiatanController extends Controller
             ->get();
 
         return response()->json(["success" => true, "data" => $data]);
+    }
+
+    public function getKegiatanTimSaya()
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json(["success" => false, "message" => "Unauthenticated."], 401);
+        }
+
+        $pegawaiId = $user->id_pegawai;
+        $unitKerjaIds = $this->resolveUserUnitKerjaIds($user);
+
+        if (!$pegawaiId && $unitKerjaIds->isEmpty()) {
+            return response()->json(["success" => true, "data" => []]);
+        }
+
+        $query = $this->kegiatanQuery()
+            ->where(function ($q) use ($unitKerjaIds, $pegawaiId) {
+                if ($unitKerjaIds->isNotEmpty()) {
+                    $q->whereIn('unit_kerja_id', $unitKerjaIds->all());
+                }
+
+                if ($pegawaiId) {
+                    $q->orWhereHas('penugasanPegawais', function ($subQ) use ($pegawaiId) {
+                        $subQ->where('id_pegawai', $pegawaiId);
+                    });
+                }
+            })
+            ->orderBy('tanggal_mulai', 'desc');
+
+        return response()->json(["success" => true, "data" => $query->get()]);
     }
 
     /**
@@ -341,6 +374,75 @@ class KegiatanController extends Controller
         }
 
         return $hasAtkTable;
+    }
+
+    private function resolveUserUnitKerjaIds($user)
+    {
+        $idsFromTim = KeanggotaanTim::query()
+            ->where('id_pegawai', $user->id_pegawai)
+            ->pluck('unit_kerja_id');
+
+        $rawIdTim = array_key_exists('id_tim', $user->getAttributes())
+            ? $user->getAttributes()['id_tim']
+            : null;
+
+        $rawIds = $this->normalizeRawIds($rawIdTim);
+        $numericRawIds = $rawIds
+            ->filter(fn ($value) => preg_match('/^\d+$/', (string) $value))
+            ->map(fn ($value) => (int) $value);
+
+        $mappedUnitIds = collect();
+
+        if ($rawIds->isNotEmpty()) {
+            $mappedUnitIds = UnitKerja::query()
+                ->whereIn('kode_unit', $rawIds->all())
+                ->orWhereIn('id', $numericRawIds->all())
+                ->pluck('id');
+        }
+
+        return $idsFromTim
+            ->merge($numericRawIds)
+            ->merge($mappedUnitIds)
+            ->filter()
+            ->map(fn ($value) => (int) $value)
+            ->unique()
+            ->values();
+    }
+
+    private function normalizeRawIds($value)
+    {
+        if (is_null($value)) {
+            return collect();
+        }
+
+        if (is_array($value)) {
+            return collect($value)
+                ->map(fn ($item) => trim((string) $item))
+                ->filter()
+                ->values();
+        }
+
+        $raw = trim((string) $value);
+
+        if ($raw === '') {
+            return collect();
+        }
+
+        if (str_starts_with($raw, '[') && str_ends_with($raw, ']')) {
+            $decoded = json_decode($raw, true);
+
+            if (is_array($decoded)) {
+                return collect($decoded)
+                    ->map(fn ($item) => trim((string) $item))
+                    ->filter()
+                    ->values();
+            }
+        }
+
+        return collect(explode(',', $raw))
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->values();
     }
 
     private function prepareKegiatanPayload(Request $request, array $validated, ?Kegiatan $existing = null): array
