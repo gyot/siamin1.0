@@ -51,4 +51,9 @@ class Peserta extends Model
     {
         return $this->hasOne(AkunPeserta::class, 'id_peserta', 'id_peserta');
     }
+
+    public function sertifikatPeserta()
+    {
+        return $this->hasMany(SertifikatPeserta::class, 'id_peserta', 'id_peserta');
+    }
 }

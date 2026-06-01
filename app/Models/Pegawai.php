@@ -51,4 +51,9 @@ class Pegawai extends Model
     {
         return $this->hasMany(KeanggotaanTim::class, 'id_pegawai', 'id_pegawai');
     }
+
+    public function sertifikatBatchDitandatangani()
+    {
+        return $this->hasMany(SertifikatBatch::class, 'id_penandatangan', 'id_pegawai');
+    }
 }

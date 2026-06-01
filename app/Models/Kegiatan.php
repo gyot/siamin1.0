@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\PenugasanPegawai;
 use App\Models\KegiatanAtk;
 use App\Models\Evaluasi;
+use App\Models\Peserta;
+use App\Models\SertifikatBatch;
 
 class Kegiatan extends Model
 {
@@ -70,5 +72,15 @@ class Kegiatan extends Model
     public function penugasanPegawais()
     {
         return $this->hasMany(PenugasanPegawai::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function peserta()
+    {
+        return $this->hasMany(Peserta::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function sertifikatBatch()
+    {
+        return $this->hasMany(SertifikatBatch::class, 'id_kegiatan', 'id_kegiatan');
     }
 }

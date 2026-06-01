@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\{
     KegiatanAtkController,
     PesertaController,
     SertifikatController,
+    SertifikatBatchController,
+    SertifikatPesertaController,
     AkunPesertaController,
     KeanggotaanTimController,
     LogAktivitasController,
@@ -35,6 +37,8 @@ Route::prefix('v1')->group(function () {
     Route::get('kegiatan/tim_kegiatan/{id}', [KegiatanController::class, 'getAllKegiatanTimKegiatan']);
     Route::get('kegiatan/tim-saya', [KegiatanController::class, 'getKegiatanTimSaya'])->middleware('auth:sanctum');
     Route::apiResource('kegiatan', KegiatanController::class);
+    Route::get('kegiatan/{id}/peserta-sertifikat', [SertifikatPesertaController::class, 'pesertaByKegiatan']);
+    Route::get('kegiatan/{id}/sertifikat-batch', [SertifikatBatchController::class, 'byKegiatan']);
     Route::apiResource('kegiatan-atk', KegiatanAtkController::class);
     Route::apiResource('peserta', PesertaController::class);
     Route::apiResource('unit-kerja', UnitKerjaController::class);
@@ -50,6 +54,11 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('users', UserController::class);
         Route::apiResource('pegawai', PegawaiController::class);
         // Route::apiResource('peserta', PesertaController::class);
+        Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
+        Route::post('sertifikat/generate', [SertifikatPesertaController::class, 'generate']);
+        Route::post('sertifikat/generate-massal', [SertifikatPesertaController::class, 'generateMassal']);
+        Route::patch('sertifikat-peserta/{id}/status', [SertifikatPesertaController::class, 'updateStatus']);
+        Route::delete('sertifikat-peserta/{id}', [SertifikatPesertaController::class, 'destroy']);
         Route::apiResource('sertifikat', SertifikatController::class);
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
