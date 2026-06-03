@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class SertifikatBatchResource extends JsonResource
 {
@@ -16,6 +17,9 @@ class SertifikatBatchResource extends JsonResource
             'id_penandatangan' => $this->id_penandatangan,
             'tanggal_ttd' => optional($this->tanggal_ttd)->format('Y-m-d'),
             'template_file' => $this->template_file,
+            'template_file_url' => $this->template_file
+                ? Storage::disk('public')->url($this->template_file)
+                : null,
             'status' => $this->status,
             'kegiatan' => $this->whenLoaded('kegiatan'),
             'penandatangan' => $this->whenLoaded('penandatangan'),

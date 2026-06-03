@@ -7,6 +7,7 @@ use App\Http\Requests\Api\StoreSertifikatBatchRequest;
 use App\Http\Requests\Api\UpdateSertifikatBatchRequest;
 use App\Http\Resources\SertifikatBatchResource;
 use App\Models\SertifikatBatch;
+use Illuminate\Support\Facades\Storage;
 
 class SertifikatBatchController extends Controller
 {
@@ -41,8 +42,24 @@ class SertifikatBatchController extends Controller
 
     public function store(StoreSertifikatBatchRequest $request)
     {
-        $batch = SertifikatBatch::create($request->validated())
-            ->load(['kegiatan', 'penandatangan']);
+        $validated = $request->validated();
+        $storedFile = null;
+
+        if ($request->hasFile('template_file')) {
+            $storedFile = $request->file('template_file')->store('template_sertifikat', 'public');
+            $validated['template_file'] = $storedFile;
+        }
+
+        try {
+            $batch = SertifikatBatch::create($validated)
+                ->load(['kegiatan', 'penandatangan']);
+        } catch (\Throwable $e) {
+            if ($storedFile && Storage::disk('public')->exists($storedFile)) {
+                Storage::disk('public')->delete($storedFile);
+            }
+
+            throw $e;
+        }
 
         return response()->json([
             'success' => true,
@@ -71,7 +88,36 @@ class SertifikatBatchController extends Controller
             return response()->json(['success' => false, 'message' => 'Batch sertifikat tidak ditemukan.'], 404);
         }
 
-        $batch->update($request->validated());
+        $validated = $request->validated();
+        $oldTemplateFile = $batch->template_file;
+        $newTemplateFile = null;
+        $deleteOldTemplateFile = false;
+
+        if ($request->hasFile('template_file')) {
+            $newTemplateFile = $request->file('template_file')->store('template_sertifikat', 'public');
+            $validated['template_file'] = $newTemplateFile;
+            $deleteOldTemplateFile = true;
+        } elseif ($request->exists('template_file') && blank($request->input('template_file'))) {
+            $validated['template_file'] = null;
+            $deleteOldTemplateFile = true;
+        } else {
+            unset($validated['template_file']);
+        }
+
+        try {
+            $batch->update($validated);
+        } catch (\Throwable $e) {
+            if ($newTemplateFile && Storage::disk('public')->exists($newTemplateFile)) {
+                Storage::disk('public')->delete($newTemplateFile);
+            }
+
+            throw $e;
+        }
+
+        if ($deleteOldTemplateFile && $oldTemplateFile && Storage::disk('public')->exists($oldTemplateFile)) {
+            Storage::disk('public')->delete($oldTemplateFile);
+        }
+
         $batch->load(['kegiatan', 'penandatangan']);
 
         return response()->json([
@@ -87,6 +133,10 @@ class SertifikatBatchController extends Controller
 
         if (!$batch) {
             return response()->json(['success' => false, 'message' => 'Batch sertifikat tidak ditemukan.'], 404);
+        }
+
+        if ($batch->template_file && Storage::disk('public')->exists($batch->template_file)) {
+            Storage::disk('public')->delete($batch->template_file);
         }
 
         $batch->delete();

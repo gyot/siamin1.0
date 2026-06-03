@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\GenerateMassalSertifikatRequest;
 use App\Http\Requests\Api\GenerateSertifikatRequest;
+use App\Http\Resources\SertifikatBatchResource;
 use App\Http\Resources\SertifikatPesertaResource;
 use App\Models\Peserta;
 use App\Models\SertifikatBatch;
@@ -19,6 +20,11 @@ class SertifikatPesertaController extends Controller
 {
     public function pesertaByKegiatan($id)
     {
+        $batches = SertifikatBatch::with(['kegiatan', 'penandatangan'])
+            ->where('id_kegiatan', $id)
+            ->orderByDesc('created_at')
+            ->get();
+
         $peserta = Peserta::query()
             ->select(['id_peserta', 'id_kegiatan', 'nama_lengkap', 'peran'])
             ->where('id_kegiatan', $id)
@@ -43,7 +49,15 @@ class SertifikatPesertaController extends Controller
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data]);
+        return response()->json([
+            'success' => true,
+            'batch_exists' => $batches->isNotEmpty(),
+            'batch' => $batches->isNotEmpty()
+                ? new SertifikatBatchResource($batches->first())
+                : null,
+            'batches' => SertifikatBatchResource::collection($batches),
+            'data' => $data,
+        ]);
     }
 
     public function generate(GenerateSertifikatRequest $request)
