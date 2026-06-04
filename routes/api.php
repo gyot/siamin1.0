@@ -48,18 +48,18 @@ Route::prefix('v1')->group(function () {
     Route::get('evaluasi/{id_kegiatan}/statistik', [EvaluasiController::class, 'statistik']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
+    Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
+    Route::post('sertifikat/generate', [SertifikatPesertaController::class, 'generate']);
+    Route::post('sertifikat/generate-massal', [SertifikatPesertaController::class, 'generateMassal']);
+    Route::patch('sertifikat-peserta/{id}/status', [SertifikatPesertaController::class, 'updateStatus']);
+    Route::delete('sertifikat-peserta/{id}', [SertifikatPesertaController::class, 'destroy']);
+    Route::apiResource('sertifikat', SertifikatController::class);
     
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
         Route::apiResource('pegawai', PegawaiController::class);
         // Route::apiResource('peserta', PesertaController::class);
-        Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
-        Route::post('sertifikat/generate', [SertifikatPesertaController::class, 'generate']);
-        Route::post('sertifikat/generate-massal', [SertifikatPesertaController::class, 'generateMassal']);
-        Route::patch('sertifikat-peserta/{id}/status', [SertifikatPesertaController::class, 'updateStatus']);
-        Route::delete('sertifikat-peserta/{id}', [SertifikatPesertaController::class, 'destroy']);
-        Route::apiResource('sertifikat', SertifikatController::class);
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
