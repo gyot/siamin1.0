@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
+
+class SertifikatResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id_batch' => $this->id_batch,
+            'id_kegiatan' => $this->id_kegiatan,
+            'nomor_sertifikat' => $this->nomor_sertifikat,
+            'id_penandatangan' => $this->id_penandatangan,
+            'tanggal_ttd' => optional($this->tanggal_ttd)->format('Y-m-d'),
+            'template_file' => $this->template_file,
+            'template_file_url' => $this->template_file
+                ? Storage::disk('public')->url($this->template_file)
+                : null,
+            'status' => $this->status,
+            'kegiatan' => $this->whenLoaded('kegiatan'),
+            'penandatangan' => $this->whenLoaded('penandatangan'),
+            'peserta' => SertifikatPesertaResource::collection($this->whenLoaded('sertifikatPeserta')),
+            'total_peserta' => $this->when(
+                $this->relationLoaded('sertifikatPeserta'),
+                fn () => $this->sertifikatPeserta->count()
+            ),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}

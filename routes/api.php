@@ -49,10 +49,10 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
-    Route::post('sertifikat/generate', [SertifikatPesertaController::class, 'generate']);
-    Route::post('sertifikat/generate-massal', [SertifikatPesertaController::class, 'generateMassal']);
-    Route::patch('sertifikat-peserta/{id}/status', [SertifikatPesertaController::class, 'updateStatus']);
-    Route::delete('sertifikat-peserta/{id}', [SertifikatPesertaController::class, 'destroy']);
+    Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
+    Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
+    Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
+    Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class);
     
     // PROTECTED
