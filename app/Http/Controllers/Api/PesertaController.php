@@ -104,13 +104,13 @@ class PesertaController extends BaseApiController
     public function show($id)
     {
         try {
-            $peserta = Peserta::with('kegiatan')->findOrFail($id);
+            $dataPeserta = Peserta::with('kegiatan')->findOrFail($id);
             $peserta = SertifikatPeserta::with(['batch.kegiatan'])
                 ->where('id_peserta', $id)
                 ->get()
                 ->map(function ($sertifikatPeserta) {
                     return [
-                        'peserta' => $peserta,
+                        'peserta' => $dataPeserta,
                         'id_batch' => $sertifikatPeserta->id_batch,
                         'id_kegiatan' => $sertifikatPeserta->batch->kegiatan->id_kegiatan,
                         'nama_kegiatan' => $sertifikatPeserta->batch->kegiatan->nama_kegiatan,
