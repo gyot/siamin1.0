@@ -130,7 +130,7 @@ class PesertaController extends BaseApiController
         }
     }
 
-    /**
+    /***
      * Display peserta with activities/kegiatan from sertifikat_peserta table
      */
     public function showWithKegiatan($id)
