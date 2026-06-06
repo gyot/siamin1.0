@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
     Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
     Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
+    Route::get('sertifikat/peserta/{id_peserta}', [SertifikatController::class, 'byPeserta']);
     Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
     Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class);

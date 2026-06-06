@@ -245,6 +245,35 @@ class SertifikatController extends Controller
         return response()->json(['success' => true, 'message' => 'Sertifikat peserta berhasil dihapus.']);
     }
 
+    /**
+     * Get sertifikat data by id_peserta from sertifikat_peserta table
+     */
+    public function byPeserta($id_peserta)
+    {
+        try {
+            $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta'])
+                ->where('id_peserta', $id_peserta)
+                ->get();
+
+            if ($sertifikat->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sertifikat untuk peserta tidak ditemukan.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => SertifikatPesertaResource::collection($sertifikat),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function ensurePesertaInBatchKegiatan(SertifikatBatch $batch, $pesertaIds): void
     {
         $validCount = \App\Models\Peserta::query()
