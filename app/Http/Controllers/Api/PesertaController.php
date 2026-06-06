@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Peserta;
+use App\Models\SertifikatBatch;
+use App\Models\SertifikatPeserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -102,7 +104,25 @@ class PesertaController extends BaseApiController
     public function show($id)
     {
         try {
-            $peserta = Peserta::with('kegiatan')->findOrFail($id);
+            // $peserta = Sertifikat::with('kegiatan')->findOrFail($id);
+            $peserta = SertifikatPeserta::with(['batch.kegiatan'])
+                ->where('id_peserta', $id)
+                ->get()
+                ->map(function ($sertifikatPeserta) {
+                    return [
+                        'id_batch' => $sertifikatPeserta->id_batch,
+                        'id_kegiatan' => $sertifikatPeserta->batch->kegiatan->id_kegiatan,
+                        'nama_kegiatan' => $sertifikatPeserta->batch->kegiatan->nama_kegiatan,
+                        'tgl_mulai' => $sertifikatPeserta->batch->kegiatan->tgl_mulai,
+                        'tgl_akhir' => $sertifikatPeserta->batch->kegiatan->tgl_akhir,
+                        'deskripsi' => $sertifikatPeserta->batch->kegiatan->deskripsi,
+                        'status_sertifikat' => $sertifikatPeserta->status,
+                        'nomor_sertifikat' => $sertifikatPeserta->batch->nomor_sertifikat,
+                        'tanggal_ttd' => $sertifikatPeserta->batch->tanggal_ttd,
+                        'qr_token' => $sertifikatPeserta->qr_token,
+                        'template_file_url' => $sertifikatPeserta->batch->template_file ? asset('storage/' . $sertifikatPeserta->batch->template_file) : null,
+                    ];
+                });
             return response()->json(['success' => true, 'data' => $peserta]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['success' => false, 'message' => 'Peserta not found'], 404);
