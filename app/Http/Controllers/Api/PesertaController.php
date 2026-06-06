@@ -110,6 +110,45 @@ class PesertaController extends BaseApiController
     }
 
     /**
+     * Display peserta with activities/kegiatan from sertifikat_peserta table
+     */
+    public function showWithKegiatan($id)
+    {
+        try {
+            $peserta = Peserta::findOrFail($id);
+            
+            // Get all activities from sertifikat_peserta
+            $activities = \App\Models\SertifikatPeserta::with(['batch.kegiatan'])
+                ->where('id_peserta', $id)
+                ->get()
+                ->map(function ($sertifikatPeserta) {
+                    return [
+                        'id_batch' => $sertifikatPeserta->id_batch,
+                        'id_kegiatan' => $sertifikatPeserta->batch->kegiatan->id_kegiatan,
+                        'nama_kegiatan' => $sertifikatPeserta->batch->kegiatan->nama_kegiatan,
+                        'tgl_mulai' => $sertifikatPeserta->batch->kegiatan->tgl_mulai,
+                        'tgl_akhir' => $sertifikatPeserta->batch->kegiatan->tgl_akhir,
+                        'deskripsi' => $sertifikatPeserta->batch->kegiatan->deskripsi,
+                        'status_sertifikat' => $sertifikatPeserta->status,
+                        'nomor_sertifikat' => $sertifikatPeserta->batch->nomor_sertifikat,
+                        'tanggal_ttd' => $sertifikatPeserta->batch->tanggal_ttd,
+                        'qr_token' => $sertifikatPeserta->qr_token,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'peserta' => $peserta,
+                    'kegiatan' => $activities,
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Peserta not found'], 404);
+        }
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
