@@ -133,6 +133,7 @@ class PesertaController extends BaseApiController
                         'nomor_sertifikat' => $sertifikatPeserta->batch->nomor_sertifikat,
                         'tanggal_ttd' => $sertifikatPeserta->batch->tanggal_ttd,
                         'qr_token' => $sertifikatPeserta->qr_token,
+                        'template_file_url' => $sertifikatPeserta->batch->template_file ? asset('storage/' . $sertifikatPeserta->batch->template_file) : null,
                     ];
                 });
 
