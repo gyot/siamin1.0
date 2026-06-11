@@ -85,7 +85,7 @@ class SertifikatPesertaController extends Controller
             ])->save();
         }
 
-        $sertifikat->load(['batch', 'peserta']);
+        $sertifikat->load(['batch.kegiatan', 'batch.penandatangan', 'peserta']);
 
         return response()->json([
             'success' => true,
@@ -122,7 +122,7 @@ class SertifikatPesertaController extends Controller
             );
         });
 
-        $sertifikat = SertifikatPeserta::with(['batch', 'peserta'])
+        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta'])
             ->where('id_batch', $batch->id_batch)
             ->whereIn('id_peserta', $pesertaIds)
             ->get();
@@ -140,7 +140,7 @@ class SertifikatPesertaController extends Controller
             'status' => ['required', Rule::in(['draft', 'terbit', 'dicabut'])],
         ]);
 
-        $sertifikat = SertifikatPeserta::with(['batch', 'peserta'])->find($id);
+        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta'])->find($id);
 
         if (!$sertifikat) {
             return response()->json(['success' => false, 'message' => 'Sertifikat peserta tidak ditemukan.'], 404);
@@ -151,7 +151,7 @@ class SertifikatPesertaController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Status sertifikat peserta berhasil diperbarui.',
-            'data' => new SertifikatPesertaResource($sertifikat->refresh()->load(['batch', 'peserta'])),
+            'data' => new SertifikatPesertaResource($sertifikat->refresh()->load(['batch.kegiatan', 'batch.penandatangan', 'peserta'])),
         ]);
     }
 

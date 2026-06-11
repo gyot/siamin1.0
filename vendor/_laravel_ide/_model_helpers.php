@@ -3107,11 +3107,14 @@ namespace App\Models {
      * @property string|null $peran
      * @property string|null $template
      * @property mixed $id_penandatangan
-     * @property string|null $tanggal_ttd
+     * @property \Illuminate\Support\Carbon|null $tanggal_ttd
      * @property string $nomor_sertifikat
      * @property mixed $id_peserta
      * @property mixed $id_kegiatan
      * @property int $id_sertifikat
+     * @property-read \App\Models\Peserta $peserta
+     * @property-read \App\Models\Kegiatan $kegiatan
+     * @property-read \App\Models\Pegawai $penandatangan
      * @method static \Illuminate\Database\Eloquent\Builder<Sertifikat>|Sertifikat whereIdSertifikat($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Sertifikat>|Sertifikat whereIdKegiatan($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Sertifikat>|Sertifikat whereIdPeserta($value)
@@ -3780,6 +3783,8 @@ namespace App\Models {
      * @property int $id
      * @property-read \App\Models\SertifikatBatch $batch
      * @property-read \App\Models\Peserta $peserta
+     * @property-read \App\Models\Kegiatan $kegiatan
+     * @property-read \App\Models\Pegawai $penandatangan
      * @method static \Illuminate\Database\Eloquent\Builder<SertifikatPeserta>|SertifikatPeserta whereId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<SertifikatPeserta>|SertifikatPeserta whereIdBatch($value)
      * @method static \Illuminate\Database\Eloquent\Builder<SertifikatPeserta>|SertifikatPeserta whereIdPeserta($value)

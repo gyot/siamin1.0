@@ -24,4 +24,23 @@ class Sertifikat extends Model
         'peran',
         'status',
     ];
+
+    protected $casts = [
+        'tanggal_ttd' => 'date',
+    ];
+
+    public function peserta()
+    {
+        return $this->belongsTo(Peserta::class, 'id_peserta', 'id_peserta');
+    }
+
+    public function kegiatan()
+    {
+        return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function penandatangan()
+    {
+        return $this->belongsTo(Pegawai::class, 'id_penandatangan', 'id_pegawai');
+    }
 }

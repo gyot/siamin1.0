@@ -27,4 +27,28 @@ class SertifikatPeserta extends Model
     {
         return $this->belongsTo(Peserta::class, 'id_peserta', 'id_peserta');
     }
+
+    public function kegiatan()
+    {
+        return $this->hasOneThrough(
+            Kegiatan::class,
+            SertifikatBatch::class,
+            'id_batch',
+            'id_kegiatan',
+            'id_batch',
+            'id_kegiatan'
+        );
+    }
+
+    public function penandatangan()
+    {
+        return $this->hasOneThrough(
+            Pegawai::class,
+            SertifikatBatch::class,
+            'id_batch',
+            'id_pegawai',
+            'id_batch',
+            'id_penandatangan'
+        );
+    }
 }
