@@ -61,16 +61,20 @@ class SertifikatController extends Controller
 
     public function show($id)
     {
-        $batch = SertifikatBatch::with(['kegiatan', 'penandatangan', 'sertifikatPeserta.peserta'])
-            ->find($id);
+        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta'])
+            ->where('id_peserta', $id)
+            ->get();
 
-        if (!$batch) {
-            return response()->json(['success' => false, 'message' => 'Sertifikat tidak ditemukan.'], 404);
+        if ($sertifikat->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sertifikat untuk peserta tidak ditemukan.',
+            ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => new SertifikatResource($batch),
+            'data' => SertifikatPesertaResource::collection($sertifikat),
         ]);
     }
 
