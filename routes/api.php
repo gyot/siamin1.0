@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\{
     EvaluasiController,
     KegiatanAtkController,
     PesertaController,
+    TpkController,
     SertifikatController,
     SertifikatBatchController,
     SertifikatPesertaController,
@@ -40,6 +41,7 @@ Route::prefix('v1')->group(function () {
     Route::get('kegiatan/{id}/peserta-sertifikat', [SertifikatPesertaController::class, 'pesertaByKegiatan']);
     Route::get('kegiatan/{id}/sertifikat-batch', [SertifikatBatchController::class, 'byKegiatan']);
     Route::apiResource('kegiatan-atk', KegiatanAtkController::class);
+    Route::apiResource('tpk', TpkController::class);
     Route::get('peserta/{id}/kegiatan', [PesertaController::class, 'showWithKegiatan']);
     Route::apiResource('peserta', PesertaController::class);
     Route::apiResource('unit-kerja', UnitKerjaController::class);

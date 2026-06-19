@@ -7,6 +7,7 @@ use App\Models\Peserta;
 use App\Models\Sertifikat;
 use App\Models\UnitKerja;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 
@@ -16,21 +17,50 @@ class DashboardService
     {
         $page = (int) ($filters['page'] ?? 1);
         $limit = (int) ($filters['limit'] ?? 9);
+        $hasTpkTable = Schema::hasTable('tpk');
+        $selectColumns = [
+            'kegiatan.id_kegiatan',
+            'kegiatan.nama_kegiatan',
+            'kegiatan.tanggal_mulai',
+            'kegiatan.tanggal_selesai',
+            'kegiatan.status',
+            'kegiatan.total_peserta',
+            'kegiatan.peserta_ringkasan',
+            'kegiatan.unit_kerja_id',
+            'unit_kerja.nama_unit as unit_kerja',
+        ];
 
-        return Kegiatan::query()
+        if (!$hasTpkTable && Schema::hasColumn('kegiatan', 'lokasi')) {
+            $selectColumns[] = 'kegiatan.lokasi';
+        }
+
+        if (!$hasTpkTable && Schema::hasColumn('kegiatan', 'kabupaten_kota')) {
+            $selectColumns[] = 'kegiatan.kabupaten_kota';
+        }
+
+        $query = Kegiatan::query()
             ->leftJoin('unit_kerja', 'unit_kerja.id', '=', 'kegiatan.unit_kerja_id')
-            ->select([
-                'kegiatan.id_kegiatan',
-                'kegiatan.nama_kegiatan',
-                'kegiatan.tanggal_mulai',
-                'kegiatan.tanggal_selesai',
-                'kegiatan.lokasi',
-                'kegiatan.status',
-                'kegiatan.total_peserta',
-                'kegiatan.peserta_ringkasan',
-                'kegiatan.unit_kerja_id',
-                'unit_kerja.nama_unit as unit_kerja',
-            ])
+            ->select($selectColumns);
+
+        if ($hasTpkTable) {
+            $query->selectSub(function ($query) {
+                $query->from('tpk')
+                    ->select('lokasi')
+                    ->whereColumn('tpk.id_kegiatan', 'kegiatan.id_kegiatan')
+                    ->orderBy('id_tpk')
+                    ->limit(1);
+            }, 'lokasi');
+
+            $query->selectSub(function ($query) {
+                $query->from('tpk')
+                    ->select('kabupaten_kota')
+                    ->whereColumn('tpk.id_kegiatan', 'kegiatan.id_kegiatan')
+                    ->orderBy('id_tpk')
+                    ->limit(1);
+            }, 'kabupaten_kota');
+        }
+
+        return $query
             ->when(! empty($filters['search']), function ($query) use ($filters) {
                 $search = $filters['search'];
 

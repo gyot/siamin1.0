@@ -66,7 +66,8 @@ class PenugasanPegawaiController extends BaseApiController
 
         $query = PenugasanPegawai::with([
             'pegawai:id_pegawai,nama',
-            'kegiatan:id_kegiatan,nama_kegiatan,tanggal_mulai,tanggal_selesai,kabupaten_kota,lokasi'
+            'kegiatan:id_kegiatan,nama_kegiatan,tanggal_mulai,tanggal_selesai',
+            'kegiatan.daftarTpk',
         ]);
 
         // Optional filters
@@ -212,6 +213,6 @@ class PenugasanPegawaiController extends BaseApiController
 
     protected function loadResource(PenugasanPegawai $item): PenugasanPegawai
     {
-        return $item->load(['pegawai', 'kegiatan']);
+        return $item->load(['pegawai', 'kegiatan.daftarTpk']);
     }
 }

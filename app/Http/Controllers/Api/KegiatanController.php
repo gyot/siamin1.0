@@ -4,18 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\DashboardKegiatanIndexRequest;
+use App\Http\Requests\Api\StoreKegiatanRequest;
+use App\Http\Requests\Api\UpdateKegiatanRequest;
 use App\Http\Resources\DashboardKegiatanCollection;
+use App\Http\Resources\KegiatanResource;
 use App\Models\KeanggotaanTim;
 use App\Models\Kegiatan;
-use App\Models\KegiatanAtk;
 use App\Models\UnitKerja;
 use App\Services\DashboardService;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Services\KegiatanService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\ValidationException;
 
 class KegiatanController extends Controller
 {
@@ -78,7 +77,7 @@ class KegiatanController extends Controller
         return response()->json(["success" => true, "data" => $data]);
     }
 
-    public function getKegiatanTimSaya()
+    public function getKegiatanTimSaya(KegiatanService $kegiatanService)
     {
         $user = auth('sanctum')->user();
 
@@ -93,7 +92,7 @@ class KegiatanController extends Controller
             return response()->json(["success" => true, "data" => []]);
         }
 
-        $query = $this->kegiatanQuery()
+        $query = $kegiatanService->query()
             ->where(function ($q) use ($unitKerjaIds, $pegawaiId) {
                 if ($unitKerjaIds->isNotEmpty()) {
                     $q->whereIn('unit_kerja_id', $unitKerjaIds->all());
@@ -107,13 +106,13 @@ class KegiatanController extends Controller
             })
             ->orderBy('tanggal_mulai', 'desc');
 
-        return response()->json(["success" => true, "data" => $query->get()]);
+        return response()->json(["success" => true, "data" => KegiatanResource::collection($query->get())]);
     }
 
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(KegiatanService $kegiatanService)
     {
         // Show kegiatan where:
         // 1. kegiatan.id_pegawai = logged-in pegawai, OR
@@ -121,7 +120,7 @@ class KegiatanController extends Controller
         $user = auth('sanctum')->user();
         $pegawaiId = $user?->id_pegawai;
 
-        $query = $this->kegiatanQuery()->orderBy('tanggal_mulai', 'desc');
+        $query = $kegiatanService->query()->orderBy('tanggal_mulai', 'desc');
 
         if ($pegawaiId) {
             $query->where(function ($q) use ($pegawaiId) {
@@ -137,16 +136,16 @@ class KegiatanController extends Controller
 
         $data = $query->get();
 
-        return response()->json(["success" => true, "data" => $data]);
+        return response()->json(["success" => true, "data" => KegiatanResource::collection($data)]);
     }
 
     /** import.meta.env.VITE_API_BASE_URL
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreKegiatanRequest $request, KegiatanService $kegiatanService)
     {
-        $validated = $request->validate($this->kegiatanRules(true));
-        $validated = $this->prepareKegiatanPayload($request, $validated);
+        $validated = $request->validated();
+        $validated = $kegiatanService->preparePayload($request, $validated);
         $storedFiles = [];
 
         if ($request->hasFile('flyer')) {
@@ -161,16 +160,7 @@ class KegiatanController extends Controller
         }
 
         try {
-            $kegiatan = DB::transaction(function () use ($validated) {
-                $atkItems = $validated['daftar_atk'] ?? [];
-                unset($validated['daftar_atk']);
-
-                $kegiatan = Kegiatan::create($validated);
-
-                $this->syncAtkRecords($kegiatan, $atkItems);
-
-                return $this->loadAtkRelation($kegiatan);
-            });
+            $kegiatan = $kegiatanService->create($validated);
         } catch (\Throwable $e) {
             foreach ($storedFiles as $storedFile) {
                 if (Storage::disk('public')->exists($storedFile)) {
@@ -181,37 +171,41 @@ class KegiatanController extends Controller
             throw $e;
         }
 
-        return response()->json(["success" => true, "data" => $kegiatan], 201);
+        return response()->json(["success" => true, "data" => new KegiatanResource($kegiatan)], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show($id, KegiatanService $kegiatanService)
     {
-        $kegiatan = $this->kegiatanQuery()->find($id);
+        $kegiatan = $kegiatanService->query()->find($id);
         if (!$kegiatan) {
             return response()->json(["success" => false, "message" => "Kegiatan not found"], 404);
         }
-        return response()->json(["success" => true, "data" => $kegiatan]);
+        return response()->json(["success" => true, "data" => new KegiatanResource($kegiatan)]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(UpdateKegiatanRequest $request, $id, KegiatanService $kegiatanService)
     {
         $kegiatan = Kegiatan::find($id);
         if (!$kegiatan) {
             return response()->json(["success" => false, "message" => "Kegiatan yang anda cari tidak ditemukan"], 404);
         }
 
-        $validated = $request->validate($this->kegiatanRules(false));
-        $validated = $this->prepareKegiatanPayload($request, $validated, $kegiatan);
+        $validated = $request->validated();
+        $validated = $kegiatanService->preparePayload($request, $validated, $kegiatan);
+        $atkItemsProvided = $request->has('daftar_atk');
+        $tpkItemsProvided = $request->has('daftar_tpk');
+        $storedFiles = [];
 
         if ($request->hasFile('flyer')) {
             $path = $request->file('flyer')->store('flyers', 'public');
             $validated['flyer'] = $path;
+            $storedFiles[] = $path;
         } elseif ($request->exists('flyer') && blank($request->input('flyer'))) {
             $validated['flyer'] = null;
         } else {
@@ -224,6 +218,7 @@ class KegiatanController extends Controller
             }
             $path = $request->file('template_biodata')->store('template_biodata', 'public');
             $validated['template_biodata'] = $path;
+            $storedFiles[] = $path;
         } elseif ($request->exists('template_biodata') && blank($request->input('template_biodata'))) {
             if ($kegiatan->template_biodata && Storage::disk('public')->exists($kegiatan->template_biodata)) {
                 Storage::disk('public')->delete($kegiatan->template_biodata);
@@ -233,25 +228,25 @@ class KegiatanController extends Controller
             unset($validated['template_biodata']);
         }
 
-        DB::transaction(function () use ($kegiatan, $validated, $request) {
-            $atkItemsProvided = $request->has('daftar_atk');
-            $atkItems = $validated['daftar_atk'] ?? [];
-            unset($validated['daftar_atk']);
-
-            $kegiatan->update($validated);
-
-            if ($atkItemsProvided) {
-                $this->syncAtkRecords($kegiatan, $atkItems);
+        try {
+            $kegiatan = $kegiatanService->update($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided);
+        } catch (\Throwable $e) {
+            foreach ($storedFiles as $storedFile) {
+                if (Storage::disk('public')->exists($storedFile)) {
+                    Storage::disk('public')->delete($storedFile);
+                }
             }
-        });
 
-        return response()->json(["success" => true, "data" => $this->loadAtkRelation($kegiatan)]);
+            throw $e;
+        }
+
+        return response()->json(["success" => true, "data" => new KegiatanResource($kegiatan)]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy($id, KegiatanService $kegiatanService)
     {
         $kegiatan = Kegiatan::find($id);
         if (!$kegiatan) {
@@ -266,114 +261,8 @@ class KegiatanController extends Controller
             Storage::disk('public')->delete($kegiatan->template_biodata);
         }
 
-        $kegiatan->delete();
+        $kegiatanService->delete($kegiatan);
         return response()->json(["success" => true, "message" => "Deleted successfully"]);
-    }
-
-    private function kegiatanRules(bool $isStore): array
-    {
-        $requiredRule = $isStore ? 'required' : 'sometimes';
-
-        return [
-            'nama_kegiatan' => [$requiredRule, 'string', 'max:255'],
-            'rincian_kegiatan' => 'sometimes|string',
-            'dokumentasi_url' => 'sometimes|url|max:255',
-            'materi_url' => 'sometimes|url|max:255',
-            'panduan_url' => 'sometimes|url|max:255',
-            'laporan_url' => 'sometimes|url|max:255',
-            'surat_menyurat_url' => 'sometimes|url|max:255',
-            'tanggal_mulai' => [$requiredRule, 'date'],
-            'tanggal_selesai' => [$requiredRule, 'date', 'after_or_equal:tanggal_mulai'],
-            'lokasi' => [$requiredRule, 'string', 'max:255'],
-            'kabupaten_kota' => 'sometimes|string|max:255',
-            'flyer' => 'sometimes|file|image|max:10048',
-            'template_biodata' => 'sometimes|file|mimes:doc,docx|max:10120',
-            'peserta_ringkasan' => 'sometimes|string',
-            'total_peserta' => 'sometimes|integer|min:0',
-            'metode_pembayaran' => [
-                'sometimes',
-                Rule::in(['transfer','pulsa','transfer_dan_pulsa','tunai','tidak_dibayar']),
-            ],
-            'deskripsi' => 'sometimes|nullable|string',
-            'metode_pelaksanaan' => [
-                'sometimes',
-                Rule::in(['daring','luring','hybrid']),
-            ],
-            'status' => [
-                $requiredRule,
-                Rule::in(['draft','berjalan','selesai','dibatalkan']),
-            ],
-            'created_by' => 'sometimes|nullable|exists:users,id_user',
-            'id_pegawai' => [$requiredRule, 'nullable', 'exists:pegawai,id_pegawai'],
-            'unit_kerja_id' => 'sometimes|nullable|exists:unit_kerja,id',
-            'daftar_atk' => 'sometimes|array',
-            'daftar_atk.*.nama_barang' => [$requiredRule, 'string', 'max:255'],
-            'daftar_atk.*.spesifikasi' => 'sometimes|nullable|string|max:255',
-            'daftar_atk.*.jumlah' => 'sometimes|integer|min:1',
-            'daftar_atk.*.satuan' => 'sometimes|nullable|string|max:100',
-            'daftar_atk.*.keterangan' => 'sometimes|nullable|string',
-        ];
-    }
-
-    private function syncAtkRecords(Kegiatan $kegiatan, array $atkItems): void
-    {
-        if (!$this->hasAtkTable()) {
-            return;
-        }
-
-        $kegiatan->daftarAtk()->delete();
-
-        if (empty($atkItems)) {
-            return;
-        }
-
-        $payload = collect($atkItems)->map(function ($item) use ($kegiatan) {
-            return [
-                'id_kegiatan' => $kegiatan->id_kegiatan,
-                'nama_barang' => $item['nama_barang'],
-                'spesifikasi' => $item['spesifikasi'] ?? null,
-                'jumlah' => $item['jumlah'] ?? 1,
-                'satuan' => $item['satuan'] ?? null,
-                'keterangan' => $item['keterangan'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        })->all();
-
-        KegiatanAtk::insert($payload);
-    }
-
-    private function kegiatanQuery()
-    {
-        $query = Kegiatan::query();
-
-        if ($this->hasAtkTable()) {
-            $query->with('daftarAtk');
-        }
-
-        return $query;
-    }
-
-    private function loadAtkRelation(Kegiatan $kegiatan): Kegiatan
-    {
-        if ($this->hasAtkTable()) {
-            return $kegiatan->load('daftarAtk');
-        }
-
-        $kegiatan->setRelation('daftarAtk', collect());
-
-        return $kegiatan;
-    }
-
-    private function hasAtkTable(): bool
-    {
-        static $hasAtkTable = null;
-
-        if ($hasAtkTable === null) {
-            $hasAtkTable = Schema::hasTable('kegiatan_atk');
-        }
-
-        return $hasAtkTable;
     }
 
     private function resolveUserUnitKerjaIds($user)
@@ -445,55 +334,4 @@ class KegiatanController extends Controller
             ->values();
     }
 
-    private function prepareKegiatanPayload(Request $request, array $validated, ?Kegiatan $existing = null): array
-    {
-        $validated['id_pegawai'] = $validated['id_pegawai']
-            ?? $existing?->id_pegawai
-            ?? $request->user()?->id_pegawai;
-
-        if (array_key_exists('created_by', $validated) === false && $request->user()) {
-            $validated['created_by'] = $request->user()->getKey();
-        }
-
-        if (!empty($validated['unit_kerja_id'])) {
-            return $validated;
-        }
-
-        if ($existing?->unit_kerja_id) {
-            $validated['unit_kerja_id'] = $existing->unit_kerja_id;
-
-            return $validated;
-        }
-
-        $pegawaiId = $validated['id_pegawai'] ?? null;
-
-        if (!$pegawaiId) {
-            throw ValidationException::withMessages([
-                'id_pegawai' => ['ID pegawai wajib dikirim untuk menyimpan kegiatan.'],
-            ]);
-        }
-
-        $unitKerjaIds = KeanggotaanTim::query()
-            ->where('id_pegawai', $pegawaiId)
-            ->pluck('unit_kerja_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($unitKerjaIds->count() === 1) {
-            $validated['unit_kerja_id'] = (int) $unitKerjaIds->first();
-
-            return $validated;
-        }
-
-        if ($unitKerjaIds->count() > 1) {
-            throw ValidationException::withMessages([
-                'unit_kerja_id' => ['Pegawai memiliki lebih dari satu unit kerja. Frontend wajib mengirim unit_kerja_id.'],
-            ]);
-        }
-
-        throw ValidationException::withMessages([
-            'unit_kerja_id' => ['Unit kerja tidak ditemukan untuk pegawai ini. Frontend wajib mengirim unit_kerja_id yang valid.'],
-        ]);
-    }
 }

@@ -9,6 +9,7 @@ use App\Models\Pegawai;
 use App\Models\User;
 use App\Models\PenugasanPegawai;
 use App\Models\KegiatanAtk;
+use App\Models\Tpk;
 use App\Models\Evaluasi;
 use App\Models\Peserta;
 use App\Models\SertifikatBatch;
@@ -34,8 +35,6 @@ class Kegiatan extends Model
         'surat_menyurat_url',
         'tanggal_mulai',
         'tanggal_selesai',
-        'lokasi',
-        'kabupaten_kota',
         'flyer',
         'template_biodata',
         'peserta_ringkasan',
@@ -62,6 +61,11 @@ class Kegiatan extends Model
     public function daftarAtk()
     {
         return $this->hasMany(KegiatanAtk::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function daftarTpk()
+    {
+        return $this->hasMany(Tpk::class, 'id_kegiatan', 'id_kegiatan');
     }
 
     public function evaluasi()

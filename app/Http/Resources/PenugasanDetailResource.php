@@ -24,8 +24,9 @@ class PenugasanDetailResource extends JsonResource
             'nama_kegiatan' => $this->kegiatan?->nama_kegiatan ?? 'N/A',
             'tanggal_mulai' => $this->kegiatan?->tanggal_mulai,
             'tanggal_selesai' => $this->kegiatan?->tanggal_selesai,
-            'kabupaten_kota' => $this->kegiatan?->kabupaten_kota,
-            'lokasi' => $this->kegiatan?->lokasi,
+            'kabupaten_kota' => $this->kegiatan?->daftarTpk?->first()?->kabupaten_kota,
+            'lokasi' => $this->kegiatan?->daftarTpk?->first()?->lokasi,
+            'daftar_tpk' => $this->kegiatan?->daftarTpk,
         ];
     }
 }
