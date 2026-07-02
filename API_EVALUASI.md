@@ -14,6 +14,7 @@ Contoh request:
 ```json
 {
   "id_kegiatan": 1,
+  "id_tpk": 1,
   "program_tujuan": 5,
   "program_bahan_ajar": 4,
   "program_alokasi_waktu": 4,
@@ -35,6 +36,7 @@ Contoh request:
 Catatan:
 
 - `id_kegiatan` mengikuti schema backend saat ini, yaitu numeric `id_kegiatan`.
+- `id_tpk` opsional, mengacu pada `tpk.id_tpk`. Jika dikirim, evaluasi akan terkait dengan TPK tertentu.
 - Evaluasi disimpan secara anonim tanpa identitas peserta.
 
 Contoh response:
@@ -46,17 +48,22 @@ Contoh response:
   "data": {
     "id_evaluasi": "EVAL-20260326091530-ABCD",
     "id_kegiatan": 1,
+    "id_tpk": 1,
     "tanggal_evaluasi": "2026-03-26T09:15:30.000000Z"
   }
 }
 ```
 
-## 2. List evaluasi per kegiatan
+## 2. List evaluasi per kegiatan (dan opsional per TPK)
 
 - Method: `GET`
-- URL: `/api/v1/evaluasi/{id_kegiatan}`
+- URL: `/api/v1/evaluasi/{id_kegiatan}/{id_tpk?}`
 - Auth: `auth:sanctum`
 - Role: `admin`, `super_admin`, `operator`, `verifikator`, `kepala`
+
+Parameter:
+- `id_kegiatan` (required) — ID kegiatan
+- `id_tpk` (optional) — ID TPK. Jika dikirim, hanya menampilkan evaluasi untuk TPK tersebut.
 
 Contoh response:
 
@@ -66,6 +73,8 @@ Contoh response:
   "data": [
     {
       "id_evaluasi": "EVAL-20260326091530-ABCD",
+      "id_kegiatan": 1,
+      "id_tpk": 1,
       "tanggal_evaluasi": "2026-03-26T09:15:30.000000Z",
       "program_tujuan": 5,
       "program_bahan_ajar": 4,
@@ -83,7 +92,12 @@ Contoh response:
 ## 3. Statistik evaluasi
 
 - Method: `GET`
-- URL: `/api/v1/evaluasi/{id_kegiatan}/statistik`
+- URL: `/api/v1/evaluasi/{id_kegiatan}/{id_tpk?}/statistik`
+- Auth: Public
+
+Parameter:
+- `id_kegiatan` (required) — ID kegiatan
+- `id_tpk` (optional) — ID TPK. Jika dikirim, statistik hanya untuk evaluasi pada TPK tersebut.
 
 Contoh response:
 
@@ -118,8 +132,12 @@ Contoh response:
 ## 4. Check status evaluasi
 
 - Method: `GET`
-- URL: `/api/v1/evaluasi/check/{id_kegiatan}`
+- URL: `/api/v1/evaluasi/check/{id_kegiatan}/{id_tpk?}`
 - Auth: Public
+
+Parameter:
+- `id_kegiatan` (required) — ID kegiatan
+- `id_tpk` (optional) — ID TPK. Jika dikirim, check hanya untuk evaluasi pada TPK tersebut.
 
 Contoh response:
 
@@ -136,5 +154,6 @@ Contoh response:
 
 - Nilai penilaian memakai rentang `1` sampai `5`
 - `fasilitator` wajib berupa array dan minimal 1 item
+- `id_tpk` opsional, jika dikirim harus valid di tabel `tpk`
 - `saran` disanitasi dengan `strip_tags`
 - Metadata `ip_address` dan `user_agent` otomatis direkam saat submit

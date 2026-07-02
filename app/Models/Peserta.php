@@ -16,6 +16,7 @@ class Peserta extends Model
 
     protected $fillable = [
         'id_kegiatan',
+        'id_tpk',
         'nama_lengkap',
         'nip',
         'pangkat',
@@ -45,6 +46,11 @@ class Peserta extends Model
     public function kegiatan()
     {
         return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function tpk()
+    {
+        return $this->belongsTo(Tpk::class, 'id_tpk', 'id_tpk');
     }
 
     public function akun()

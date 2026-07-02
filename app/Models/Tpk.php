@@ -24,4 +24,9 @@ class Tpk extends Model
     {
         return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
     }
+
+    public function peserta()
+    {
+        return $this->hasMany(Peserta::class, 'id_tpk', 'id_tpk');
+    }
 }

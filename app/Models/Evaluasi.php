@@ -17,6 +17,7 @@ class Evaluasi extends Model
     protected $fillable = [
         'id_evaluasi',
         'id_kegiatan',
+        'id_tpk',
         'program_tujuan',
         'program_bahan_ajar',
         'program_alokasi_waktu',
@@ -41,5 +42,10 @@ class Evaluasi extends Model
     public function kegiatan()
     {
         return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function tpk()
+    {
+        return $this->belongsTo(Tpk::class, 'id_tpk', 'id_tpk');
     }
 }

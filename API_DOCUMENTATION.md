@@ -6,7 +6,7 @@ Backend API untuk sistem informasi SIAMIN yang menyediakan fitur login user dan 
 ## Setup Awal
 
 ### 1. Konfigurasi Database
-Database menggunakan SQLite dengan struktur 2 tabel utama:
+Database menggunakan MySQL dengan struktur 2 tabel utama:
 
 #### Tabel `pegawai`
 - `id_pegawai`: ID primary key (auto increment)

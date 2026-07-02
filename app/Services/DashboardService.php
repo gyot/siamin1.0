@@ -26,6 +26,15 @@ class DashboardService
             'kegiatan.status',
             'kegiatan.total_peserta',
             'kegiatan.peserta_ringkasan',
+            'kegiatan.metode_pelaksanaan',
+            'kegiatan.metode_pembayaran',
+            'kegiatan.deskripsi',
+            'kegiatan.rincian_kegiatan',
+            'kegiatan.dokumentasi_url',
+            'kegiatan.materi_url',
+            'kegiatan.panduan_url',
+            'kegiatan.laporan_url',
+            'kegiatan.surat_menyurat_url',
             'kegiatan.unit_kerja_id',
             'unit_kerja.nama_unit as unit_kerja',
         ];
@@ -43,6 +52,8 @@ class DashboardService
             ->select($selectColumns);
 
         if ($hasTpkTable) {
+            $query->with('daftarTpk');
+
             $query->selectSub(function ($query) {
                 $query->from('tpk')
                     ->select('lokasi')

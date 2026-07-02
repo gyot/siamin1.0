@@ -47,8 +47,8 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('unit-kerja', UnitKerjaController::class);
     Route::get('unit-kerja/user/{id}', [UnitKerjaController::class, 'unit_user']);
     Route::post('evaluasi', [EvaluasiController::class, 'store']);
-    Route::get('evaluasi/check/{id_kegiatan}', [EvaluasiController::class, 'check']);
-    Route::get('evaluasi/{id_kegiatan}/statistik', [EvaluasiController::class, 'statistik']);
+    Route::get('evaluasi/check/{id_kegiatan}/{id_tpk?}', [EvaluasiController::class, 'check']);
+    Route::get('evaluasi/{id_kegiatan}/{id_tpk?}/statistik', [EvaluasiController::class, 'statistik']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
@@ -58,7 +58,6 @@ Route::prefix('v1')->group(function () {
     Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
     Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class);
-    
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
@@ -70,10 +69,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('penugasan-pegawai', PenugasanPegawaiController::class);
         Route::get('penugasan-pegawai-detailed', [PenugasanPegawaiController::class, 'indexWithDetails']);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
-        Route::get('evaluasi/{id_kegiatan}', [EvaluasiController::class, 'indexByKegiatan']);
+        Route::get('evaluasi/{id_kegiatan}/{id_tpk?}', [EvaluasiController::class, 'indexByKegiatan']);
 
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
     });
 
-});
+    });

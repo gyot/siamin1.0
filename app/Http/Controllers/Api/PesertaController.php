@@ -21,7 +21,7 @@ class PesertaController extends BaseApiController
         // $data = Peserta::with('kegiatan')->orderBy('created_at', 'desc')->get();
         // return response()->json(['success' => true, 'data' => $data]);
 
-        $query = Peserta::with('kegiatan')
+        $query = Peserta::with(['kegiatan', 'tpk'])
         ->orderBy('created_at', 'desc');
 
         if ($request->filled('kegiatan_id')) {
@@ -43,6 +43,7 @@ class PesertaController extends BaseApiController
     {
         $validated = $request->validate([
             'id_kegiatan' => 'required|exists:kegiatan,id_kegiatan',
+            'id_tpk' => 'nullable|exists:tpk,id_tpk',
             'nama_lengkap' => 'required|string|max:150',
             'nip' => 'sometimes|string|max:30',
             'pangkat' => 'sometimes|string|max:50',
@@ -104,7 +105,7 @@ class PesertaController extends BaseApiController
     public function show($id)
     {
         try {
-            $dataPeserta = Peserta::with('kegiatan')->findOrFail($id);
+            $dataPeserta = Peserta::with(['kegiatan', 'tpk'])->findOrFail($id);
             $peserta = SertifikatPeserta::with(['batch.kegiatan'])
                 ->where('id_peserta', $id)
                 ->get()
@@ -136,7 +137,7 @@ class PesertaController extends BaseApiController
     public function showWithKegiatan($id)
     {
         try {
-            $peserta = Peserta::findOrFail($id);
+            $peserta = Peserta::with('tpk')->findOrFail($id);
             
             // Get all activities from sertifikat_peserta
             $activities = \App\Models\SertifikatPeserta::with(['batch.kegiatan'])
@@ -183,6 +184,7 @@ class PesertaController extends BaseApiController
 
         $validated = $request->validate([
             'id_kegiatan' => 'sometimes|exists:kegiatan,id_kegiatan',
+            'id_tpk' => 'nullable|exists:tpk,id_tpk',
             'nama_lengkap' => 'sometimes|string|max:150',
             'nip' => 'sometimes|string|max:30',
             'pangkat' => 'sometimes|string|max:50',

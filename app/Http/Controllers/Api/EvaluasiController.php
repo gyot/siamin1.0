@@ -47,31 +47,38 @@ class EvaluasiController extends Controller
             'data' => [
                 'id_evaluasi' => $evaluasi->id_evaluasi,
                 'id_kegiatan' => $evaluasi->id_kegiatan,
+                'id_tpk' => $evaluasi->id_tpk,
                 'tanggal_evaluasi' => $evaluasi->tanggal_evaluasi?->toISOString(),
             ],
         ], 201);
     }
 
-    public function indexByKegiatan($id_kegiatan, Request $request)
+    public function indexByKegiatan($id_kegiatan, $id_tpk = null, Request $request)
     {
         $this->ensureAdminAccess($request);
 
-        $data = Evaluasi::query()
+        $query = Evaluasi::query()
             ->where('id_kegiatan', $id_kegiatan)
-            ->orderByDesc('tanggal_evaluasi')
-            ->get([
-                'id_evaluasi',
-                'id_kegiatan',
-                'tanggal_evaluasi',
-                'program_tujuan',
-                'program_bahan_ajar',
-                'program_alokasi_waktu',
-                'fasilitator',
-                'layanan_panitia',
-                'layanan_fasilitas',
-                'layanan_konsumsi',
-                'saran',
-            ]);
+            ->orderByDesc('tanggal_evaluasi');
+
+        if ($id_tpk !== null) {
+            $query->where('id_tpk', $id_tpk);
+        }
+
+        $data = $query->get([
+            'id_evaluasi',
+            'id_kegiatan',
+            'id_tpk',
+            'tanggal_evaluasi',
+            'program_tujuan',
+            'program_bahan_ajar',
+            'program_alokasi_waktu',
+            'fasilitator',
+            'layanan_panitia',
+            'layanan_fasilitas',
+            'layanan_konsumsi',
+            'saran',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -79,13 +86,18 @@ class EvaluasiController extends Controller
         ]);
     }
 
-    public function statistik($id_kegiatan, Request $request)
+    public function statistik($id_kegiatan, $id_tpk = null, Request $request)
     {
         // $this->ensureAdminAccess($request);
 
-        $evaluasi = Evaluasi::query()
-            ->where('id_kegiatan', $id_kegiatan)
-            ->get();
+        $query = Evaluasi::query()
+            ->where('id_kegiatan', $id_kegiatan);
+
+        if ($id_tpk !== null) {
+            $query->where('id_tpk', $id_tpk);
+        }
+
+        $evaluasi = $query->get();
 
         $totalEvaluasi = $evaluasi->count();
 
@@ -186,11 +198,16 @@ class EvaluasiController extends Controller
         ]);
     }
 
-    public function check($id_kegiatan, Request $request)
+    public function check($id_kegiatan, $id_tpk = null, Request $request)
     {
-        $evaluasi = Evaluasi::query()
-            ->where('id_kegiatan', $id_kegiatan)
-            ->exists();
+        $query = Evaluasi::query()
+            ->where('id_kegiatan', $id_kegiatan);
+
+        if ($id_tpk !== null) {
+            $query->where('id_tpk', $id_tpk);
+        }
+
+        $evaluasi = $query->exists();
 
         return response()->json([
             'success' => true,
@@ -204,6 +221,7 @@ class EvaluasiController extends Controller
     {
         return [
             'id_kegiatan' => 'required|exists:kegiatan,id_kegiatan',
+            'id_tpk' => 'nullable|exists:tpk,id_tpk',
             'program_tujuan' => 'required|integer|between:1,5',
             'program_bahan_ajar' => 'required|integer|between:1,5',
             'program_alokasi_waktu' => 'required|integer|between:1,5',
@@ -235,6 +253,7 @@ class EvaluasiController extends Controller
 
         return [
             'id_kegiatan' => $validated['id_kegiatan'],
+            'id_tpk' => $validated['id_tpk'] ?? null,
             'program_tujuan' => (int) $validated['program_tujuan'],
             'program_bahan_ajar' => (int) $validated['program_bahan_ajar'],
             'program_alokasi_waktu' => (int) $validated['program_alokasi_waktu'],
