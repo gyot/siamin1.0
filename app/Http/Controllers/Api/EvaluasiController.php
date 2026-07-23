@@ -225,11 +225,11 @@ class EvaluasiController extends Controller
             'program_tujuan' => 'required|integer|between:1,5',
             'program_bahan_ajar' => 'required|integer|between:1,5',
             'program_alokasi_waktu' => 'required|integer|between:1,5',
-            'fasilitator' => 'required|array|min:1',
-            'fasilitator.*.nama' => 'required|string|max:255',
-            'fasilitator.*.penguasaan_materi' => 'required|integer|between:1,5',
-            'fasilitator.*.sistematika' => 'required|integer|between:1,5',
-            'fasilitator.*.sikap' => 'required|integer|between:1,5',
+            'fasilitator' => 'nullable|array|min:1',
+            'fasilitator.*.nama' => 'nullable|string|max:255',
+            'fasilitator.*.penguasaan_materi' => 'nullable|integer|between:1,5',
+            'fasilitator.*.sistematika' => 'nullable|integer|between:1,5',
+            'fasilitator.*.sikap' => 'nullable|integer|between:1,5',
             'layanan_panitia' => 'required|integer|between:1,5',
             'layanan_fasilitas' => 'required|integer|between:1,5',
             'layanan_konsumsi' => 'required|integer|between:1,5',
@@ -239,13 +239,13 @@ class EvaluasiController extends Controller
 
     private function buildPayload(Request $request, array $validated): array
     {
-        $fasilitator = collect($validated['fasilitator'])
+        $fasilitator = collect($validated['fasilitator'] ?? [])
             ->map(function ($item) {
                 return [
-                    'nama' => trim(strip_tags((string) $item['nama'])),
-                    'penguasaan_materi' => (int) $item['penguasaan_materi'],
-                    'sistematika' => (int) $item['sistematika'],
-                    'sikap' => (int) $item['sikap'],
+                    'nama' => trim(strip_tags((string) ($item['nama'] ?? ''))),
+                    'penguasaan_materi' => (int) ($item['penguasaan_materi'] ?? 0),
+                    'sistematika' => (int) ($item['sistematika'] ?? 0),
+                    'sikap' => (int) ($item['sikap'] ?? 0),
                 ];
             })
             ->values()
