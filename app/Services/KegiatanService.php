@@ -189,23 +189,35 @@ class KegiatanService
             return;
         }
 
-        $kegiatan->daftarTpk()->delete();
+        $submittedIds = collect();
 
-        if (empty($tpkItems)) {
-            return;
-        }
+        foreach ($tpkItems as $item) {
+            if (!empty($item['id_tpk'])) {
+                $tpk = Tpk::where('id_tpk', $item['id_tpk'])
+                    ->where('id_kegiatan', $kegiatan->id_kegiatan)
+                    ->first();
 
-        $payload = collect($tpkItems)->map(function ($item) use ($kegiatan) {
-            return [
+                if ($tpk) {
+                    $tpk->update([
+                        'lokasi' => $item['lokasi'],
+                        'kabupaten_kota' => $item['kabupaten_kota'] ?? null,
+                    ]);
+                    $submittedIds->push($tpk->id_tpk);
+                    continue;
+                }
+            }
+
+            $newTpk = Tpk::create([
                 'id_kegiatan' => $kegiatan->id_kegiatan,
                 'lokasi' => $item['lokasi'],
                 'kabupaten_kota' => $item['kabupaten_kota'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        })->all();
+            ]);
+            $submittedIds->push($newTpk->id_tpk);
+        }
 
-        Tpk::insert($payload);
+        $kegiatan->daftarTpk()
+            ->whereNotIn('id_tpk', $submittedIds->all())
+            ->delete();
     }
 
     private function hasAtkTable(): bool

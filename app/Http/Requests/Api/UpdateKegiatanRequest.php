@@ -51,6 +51,7 @@ class UpdateKegiatanRequest extends FormRequest
             'daftar_atk.*.satuan' => 'sometimes|nullable|string|max:100',
             'daftar_atk.*.keterangan' => 'sometimes|nullable|string',
             'daftar_tpk' => 'sometimes|array|min:1',
+            'daftar_tpk.*.id_tpk' => 'sometimes|nullable|exists:tpk,id_tpk',
             'daftar_tpk.*.lokasi' => ['required_with:daftar_tpk', 'string', 'max:255'],
             'daftar_tpk.*.kabupaten_kota' => 'sometimes|nullable|string|max:255',
         ];
