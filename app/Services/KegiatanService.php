@@ -189,30 +189,37 @@ class KegiatanService
             return;
         }
 
+        $existingTpk = $kegiatan->daftarTpk()->get();
         $submittedIds = collect();
 
         foreach ($tpkItems as $item) {
-            if (!empty($item['id_tpk'])) {
-                $tpk = Tpk::where('id_tpk', $item['id_tpk'])
-                    ->where('id_kegiatan', $kegiatan->id_kegiatan)
-                    ->first();
+            $tpk = null;
 
-                if ($tpk) {
-                    $tpk->update([
-                        'lokasi' => $item['lokasi'],
-                        'kabupaten_kota' => $item['kabupaten_kota'] ?? null,
-                    ]);
-                    $submittedIds->push($tpk->id_tpk);
-                    continue;
-                }
+            if (!empty($item['id_tpk'])) {
+                $tpk = $existingTpk->firstWhere('id_tpk', (int) $item['id_tpk']);
             }
 
-            $newTpk = Tpk::create([
-                'id_kegiatan' => $kegiatan->id_kegiatan,
-                'lokasi' => $item['lokasi'],
-                'kabupaten_kota' => $item['kabupaten_kota'] ?? null,
-            ]);
-            $submittedIds->push($newTpk->id_tpk);
+            if (!$tpk) {
+                $tpk = $existingTpk->first(function ($existing) use ($item) {
+                    return $existing->lokasi === ($item['lokasi'] ?? '')
+                        && $existing->kabupaten_kota === ($item['kabupaten_kota'] ?? null);
+                });
+            }
+
+            if ($tpk) {
+                $tpk->update([
+                    'lokasi' => $item['lokasi'],
+                    'kabupaten_kota' => $item['kabupaten_kota'] ?? null,
+                ]);
+                $submittedIds->push($tpk->id_tpk);
+            } else {
+                $newTpk = Tpk::create([
+                    'id_kegiatan' => $kegiatan->id_kegiatan,
+                    'lokasi' => $item['lokasi'],
+                    'kabupaten_kota' => $item['kabupaten_kota'] ?? null,
+                ]);
+                $submittedIds->push($newTpk->id_tpk);
+            }
         }
 
         $kegiatan->daftarTpk()
