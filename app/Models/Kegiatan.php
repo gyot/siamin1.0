@@ -12,6 +12,7 @@ use App\Models\KegiatanAtk;
 use App\Models\Tpk;
 use App\Models\Evaluasi;
 use App\Models\Peserta;
+use App\Models\PaketSoal;
 use App\Models\SertifikatBatch;
 
 class Kegiatan extends Model
@@ -86,5 +87,10 @@ class Kegiatan extends Model
     public function sertifikatBatch()
     {
         return $this->hasMany(SertifikatBatch::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
+    public function paketSoals()
+    {
+        return $this->hasMany(PaketSoal::class, 'id_kegiatan', 'id_kegiatan');
     }
 }

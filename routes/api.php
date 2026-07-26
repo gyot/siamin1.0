@@ -19,7 +19,8 @@ use App\Http\Controllers\Api\{
     KeanggotaanTimController,
     LogAktivitasController,
     UnitKerjaController,
-    SubUnitKerjaController
+    SubUnitKerjaController,
+    TestController
 };
 
 Route::prefix('v1')->group(function () {
@@ -58,6 +59,16 @@ Route::prefix('v1')->group(function () {
     Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
     Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class);
+
+    // TEST / PAKET SOAL (public)
+    Route::get('test/peserta/{id_kegiatan}', [TestController::class, 'pesertaByKegiatan']);
+    Route::get('test/peserta-detail/{id_peserta}', [TestController::class, 'pesertaDetail']);
+    Route::get('test/paket/{id_kegiatan}', [TestController::class, 'paketByKegiatan']);
+    Route::get('test/soal/{id_paket_soal}', [TestController::class, 'soalByPaket']);
+    Route::post('test/submit', [TestController::class, 'submit']);
+    Route::get('test/hasil/{id_peserta}/{id_paket_soal}', [TestController::class, 'hasil']);
+    Route::get('test/template', [TestController::class, 'downloadTemplate']);
+
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
@@ -70,6 +81,25 @@ Route::prefix('v1')->group(function () {
         Route::get('penugasan-pegawai-detailed', [PenugasanPegawaiController::class, 'indexWithDetails']);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
         Route::get('evaluasi/{id_kegiatan}/{id_tpk?}', [EvaluasiController::class, 'indexByKegiatan']);
+
+        // TEST LAPORAN (admin)
+        Route::get('test/laporan/{id_kegiatan}', [TestController::class, 'laporanByKegiatan']);
+        Route::get('test/laporan/{id_kegiatan}/{id_peserta}/{id_paket_soal}', [TestController::class, 'laporanDetail']);
+
+        // CRUD PAKET SOAL (admin)
+        Route::get('test/paket-all', [TestController::class, 'indexPaket']);
+        Route::post('test/paket', [TestController::class, 'storePaket']);
+        Route::get('test/paket-manage/{id_paket_soal}', [TestController::class, 'showPaket']);
+        Route::put('test/paket/{id_paket_soal}', [TestController::class, 'updatePaket']);
+        Route::delete('test/paket/{id_paket_soal}', [TestController::class, 'destroyPaket']);
+
+        // CRUD SOAL (admin)
+        Route::get('test/paket/{id_paket_soal}/soal', [TestController::class, 'indexSoal']);
+        Route::post('test/paket/{id_paket_soal}/soal', [TestController::class, 'storeSoal']);
+        Route::post('test/paket/{id_paket_soal}/import', [TestController::class, 'importSoal']);
+        Route::put('test/paket/{id_paket_soal}/soal-replace', [TestController::class, 'replaceSoal']);
+        Route::put('test/soal/{id_soal}', [TestController::class, 'updateSoal']);
+        Route::delete('test/soal/{id_soal}', [TestController::class, 'destroySoal']);
 
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);

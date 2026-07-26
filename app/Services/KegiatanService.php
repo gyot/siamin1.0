@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\KeanggotaanTim;
 use App\Models\Kegiatan;
 use App\Models\KegiatanAtk;
+use App\Models\PaketSoal;
 use App\Models\Tpk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,8 @@ class KegiatanService
             $query->with('daftarTpk');
         }
 
+        $query->with('paketSoals');
+
         return $query;
     }
 
@@ -44,12 +47,13 @@ class KegiatanService
         });
     }
 
-    public function update(Kegiatan $kegiatan, array $validated, bool $atkItemsProvided, bool $tpkItemsProvided): Kegiatan
+    public function update(Kegiatan $kegiatan, array $validated, bool $atkItemsProvided, bool $tpkItemsProvided, bool $paketSoalProvided = false): Kegiatan
     {
-        return DB::transaction(function () use ($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided) {
+        return DB::transaction(function () use ($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided, $paketSoalProvided) {
             $atkItems = $validated['daftar_atk'] ?? [];
             $tpkItems = $validated['daftar_tpk'] ?? [];
-            unset($validated['daftar_atk'], $validated['daftar_tpk']);
+            $paketSoalIds = $validated['daftar_paket_soal'] ?? [];
+            unset($validated['daftar_atk'], $validated['daftar_tpk'], $validated['daftar_paket_soal']);
 
             $kegiatan->update($validated);
 
@@ -59,6 +63,10 @@ class KegiatanService
 
             if ($tpkItemsProvided) {
                 $this->syncTpkRecords($kegiatan, $tpkItems);
+            }
+
+            if ($paketSoalProvided) {
+                $this->syncPaketSoal($kegiatan, $paketSoalIds);
             }
 
             return $this->loadRelations($kegiatan);
@@ -134,7 +142,7 @@ class KegiatanService
 
     public function loadRelations(Kegiatan $kegiatan): Kegiatan
     {
-        $relations = [];
+        $relations = ['paketSoals'];
 
         if ($this->hasAtkTable()) {
             $relations[] = 'daftarAtk';
@@ -148,11 +156,7 @@ class KegiatanService
             $kegiatan->setRelation('daftarTpk', collect());
         }
 
-        if (!empty($relations)) {
-            return $kegiatan->load($relations);
-        }
-
-        return $kegiatan;
+        return $kegiatan->load($relations);
     }
 
     private function syncAtkRecords(Kegiatan $kegiatan, array $atkItems): void
@@ -225,6 +229,29 @@ class KegiatanService
         $kegiatan->daftarTpk()
             ->whereNotIn('id_tpk', $submittedIds->all())
             ->delete();
+    }
+
+    private function syncPaketSoal(Kegiatan $kegiatan, array $paketSoalIds): void
+    {
+        $currentIds = PaketSoal::where('id_kegiatan', $kegiatan->id_kegiatan)
+            ->pluck('id_paket_soal')
+            ->all();
+
+        $newIds = array_map('intval', $paketSoalIds);
+        $toRemove = array_diff($currentIds, $newIds);
+        $toAdd = array_diff($newIds, $currentIds);
+
+        if (!empty($toRemove)) {
+            PaketSoal::whereIn('id_paket_soal', $toRemove)
+                ->where('id_kegiatan', $kegiatan->id_kegiatan)
+                ->update(['id_kegiatan' => null]);
+        }
+
+        if (!empty($toAdd)) {
+            PaketSoal::whereIn('id_paket_soal', $toAdd)
+                ->whereNull('id_kegiatan')
+                ->update(['id_kegiatan' => $kegiatan->id_kegiatan]);
+        }
     }
 
     private function hasAtkTable(): bool

@@ -54,6 +54,8 @@ class UpdateKegiatanRequest extends FormRequest
             'daftar_tpk.*.id_tpk' => 'sometimes|nullable|exists:tpk,id_tpk',
             'daftar_tpk.*.lokasi' => ['required_with:daftar_tpk', 'string', 'max:255'],
             'daftar_tpk.*.kabupaten_kota' => 'sometimes|nullable|string|max:255',
+            'daftar_paket_soal' => 'sometimes|array',
+            'daftar_paket_soal.*' => 'integer|exists:paket_soal,id_paket_soal',
         ];
     }
 }

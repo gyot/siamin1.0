@@ -35,6 +35,7 @@ class KegiatanResource extends JsonResource
             'updated_at' => $this->updated_at,
             'daftar_atk' => $this->whenLoaded('daftarAtk'),
             'daftar_tpk' => $this->whenLoaded('daftarTpk'),
+            'paket_soal' => $this->whenLoaded('paketSoals'),
         ];
     }
 }

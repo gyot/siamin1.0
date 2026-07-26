@@ -200,6 +200,7 @@ class KegiatanController extends Controller
         $validated = $kegiatanService->preparePayload($request, $validated, $kegiatan);
         $atkItemsProvided = $request->has('daftar_atk');
         $tpkItemsProvided = $request->has('daftar_tpk');
+        $paketSoalProvided = $request->has('daftar_paket_soal');
         $storedFiles = [];
 
         if ($request->hasFile('flyer')) {
@@ -229,7 +230,7 @@ class KegiatanController extends Controller
         }
 
         try {
-            $kegiatan = $kegiatanService->update($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided);
+            $kegiatan = $kegiatanService->update($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided, $paketSoalProvided);
         } catch (\Throwable $e) {
             foreach ($storedFiles as $storedFile) {
                 if (Storage::disk('public')->exists($storedFile)) {
