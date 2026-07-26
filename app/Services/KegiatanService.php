@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\KeanggotaanTim;
 use App\Models\Kegiatan;
 use App\Models\KegiatanAtk;
-use App\Models\PaketSoal;
 use App\Models\Tpk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -233,25 +232,7 @@ class KegiatanService
 
     private function syncPaketSoal(Kegiatan $kegiatan, array $paketSoalIds): void
     {
-        $currentIds = PaketSoal::where('id_kegiatan', $kegiatan->id_kegiatan)
-            ->pluck('id_paket_soal')
-            ->all();
-
-        $newIds = array_map('intval', $paketSoalIds);
-        $toRemove = array_diff($currentIds, $newIds);
-        $toAdd = array_diff($newIds, $currentIds);
-
-        if (!empty($toRemove)) {
-            PaketSoal::whereIn('id_paket_soal', $toRemove)
-                ->where('id_kegiatan', $kegiatan->id_kegiatan)
-                ->update(['id_kegiatan' => null]);
-        }
-
-        if (!empty($toAdd)) {
-            PaketSoal::whereIn('id_paket_soal', $toAdd)
-                ->whereNull('id_kegiatan')
-                ->update(['id_kegiatan' => $kegiatan->id_kegiatan]);
-        }
+        $kegiatan->paketSoals()->sync($paketSoalIds);
     }
 
     private function hasAtkTable(): bool

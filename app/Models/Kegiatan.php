@@ -91,6 +91,7 @@ class Kegiatan extends Model
 
     public function paketSoals()
     {
-        return $this->hasMany(PaketSoal::class, 'id_kegiatan', 'id_kegiatan');
+        return $this->belongsToMany(PaketSoal::class, 'kegiatan_paket_soal', 'id_kegiatan', 'id_paket_soal', 'id_kegiatan', 'id_paket_soal')
+            ->withTimestamps();
     }
 }

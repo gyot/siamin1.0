@@ -48,7 +48,7 @@ class TestController extends Controller
 
     public function paketByKegiatan($id_kegiatan)
     {
-        $paket = PaketSoal::where('id_kegiatan', $id_kegiatan)
+        $paket = PaketSoal::whereHas('kegiatans', fn ($q) => $q->where('kegiatan.id_kegiatan', $id_kegiatan))
             ->where('is_active', true)
             ->withCount('soals')
             ->orderBy('nama_paket')
@@ -187,7 +187,7 @@ class TestController extends Controller
         $this->ensureAdminAccess($request);
 
         $query = JawabanPeserta::query()
-            ->whereHas('paketSoal', fn ($q) => $q->where('id_kegiatan', $id_kegiatan))
+            ->whereHas('paketSoal.kegiatans', fn ($q) => $q->where('kegiatan.id_kegiatan', $id_kegiatan))
             ->with([
                 'peserta' => fn ($q) => $q->select('id_peserta', 'nama_lengkap', 'nip', 'pangkat', 'gol', 'jabatan', 'nama_instansi', 'kab_kota', 'provinsi'),
                 'paketSoal' => fn ($q) => $q->select('id_paket_soal', 'nama_paket'),
@@ -291,12 +291,8 @@ class TestController extends Controller
         $this->ensureAdminAccess($request);
 
         $query = PaketSoal::withCount('soals')
-            ->with('kegiatan:id_kegiatan,nama_kegiatan')
+            ->with('kegiatans:id_kegiatan,nama_kegiatan')
             ->orderByDesc('created_at');
-
-        if ($request->filled('id_kegiatan')) {
-            $query->where('id_kegiatan', $request->input('id_kegiatan'));
-        }
 
         if ($request->filled('search')) {
             $query->where('nama_paket', 'like', '%' . $request->input('search') . '%');
@@ -314,7 +310,6 @@ class TestController extends Controller
         $validated = $request->validate([
             'nama_paket' => 'required|string|max:255',
             'deskripsi' => 'nullable|string|max:1000',
-            'id_kegiatan' => 'nullable|exists:kegiatan,id_kegiatan',
             'is_active' => 'boolean',
         ]);
 
@@ -328,7 +323,7 @@ class TestController extends Controller
         $this->ensureAdminAccess($request);
 
         $paket = PaketSoal::withCount('soals')
-            ->with('kegiatan:id_kegiatan,nama_kegiatan')
+            ->with('kegiatans:id_kegiatan,nama_kegiatan')
             ->find($id_paket_soal);
 
         if (!$paket) {
@@ -351,7 +346,6 @@ class TestController extends Controller
         $validated = $request->validate([
             'nama_paket' => 'sometimes|string|max:255',
             'deskripsi' => 'nullable|string|max:1000',
-            'id_kegiatan' => 'nullable|exists:kegiatan,id_kegiatan',
             'is_active' => 'boolean',
         ]);
 

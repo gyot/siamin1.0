@@ -15,7 +15,6 @@ class PaketSoal extends Model
     protected $keyType = 'int';
 
     protected $fillable = [
-        'id_kegiatan',
         'nama_paket',
         'deskripsi',
         'is_active',
@@ -25,9 +24,10 @@ class PaketSoal extends Model
         'is_active' => 'boolean',
     ];
 
-    public function kegiatan()
+    public function kegiatans()
     {
-        return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
+        return $this->belongsToMany(Kegiatan::class, 'kegiatan_paket_soal', 'id_paket_soal', 'id_kegiatan', 'id_paket_soal', 'id_kegiatan')
+            ->withTimestamps();
     }
 
     public function soals()
