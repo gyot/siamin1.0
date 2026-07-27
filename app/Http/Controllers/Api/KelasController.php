@@ -35,7 +35,7 @@ class KelasController extends Controller
     public function show($id_kelas)
     {
         $kelas = Kelas::with([
-            'pesertas' => fn ($q) => $q->select('peserta.id_peserta', 'id_kegiatan', 'nama_lengkap', 'nip', 'nama_instansi', 'tanda_tangan')
+            'pesertas' => fn ($q) => $q->select('peserta.id_peserta', 'id_kegiatan', 'nama_lengkap', 'nip', 'nama_instansi', 'kab_kota', 'tanda_tangan')
                 ->orderBy('nama_lengkap'),
         ])->withCount('anggotas')->find($id_kelas);
 
