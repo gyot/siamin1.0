@@ -549,20 +549,38 @@ class TestController extends Controller
                     continue;
                 }
 
-                $jawabanBenar = strtolower(trim($row[$colMap['jawaban_benar']] ?? ''));
+                $pilihanA = trim($row[$colMap['pilihan_a']] ?? '');
+                $pilihanB = trim($row[$colMap['pilihan_b']] ?? '');
+                $pilihanC = trim($row[$colMap['pilihan_c']] ?? '');
+                $pilihanD = trim($row[$colMap['pilihan_d']] ?? '');
+                $jawabanInput = trim($row[$colMap['jawaban_benar']] ?? '');
 
-                if (!in_array($jawabanBenar, ['a', 'b', 'c', 'd'])) {
-                    $errors[] = "Baris " . ($i + 1) . ": jawaban_benar harus a/b/c/d, dapat '{$jawabanBenar}'";
+                $jawabanBenar = null;
+                $pilihanMap = ['a' => $pilihanA, 'b' => $pilihanB, 'c' => $pilihanC, 'd' => $pilihanD];
+
+                if (in_array(strtolower($jawabanInput), ['a', 'b', 'c', 'd'])) {
+                    $jawabanBenar = strtolower($jawabanInput);
+                } else {
+                    foreach ($pilihanMap as $huruf => $isi) {
+                        if (strtolower($isi) === strtolower($jawabanInput) && $isi !== '') {
+                            $jawabanBenar = $huruf;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$jawabanBenar) {
+                    $errors[] = "Baris " . ($i + 1) . ": jawaban_benar '{$jawabanInput}' tidak cocok dengan pilihan manapun";
                     continue;
                 }
 
                 $records[] = [
                     'id_paket_soal' => $id_paket_soal,
                     'pertanyaan' => trim($row[$colMap['pertanyaan']]),
-                    'pilihan_a' => trim($row[$colMap['pilihan_a']] ?? ''),
-                    'pilihan_b' => trim($row[$colMap['pilihan_b']] ?? ''),
-                    'pilihan_c' => trim($row[$colMap['pilihan_c']] ?? ''),
-                    'pilihan_d' => trim($row[$colMap['pilihan_d']] ?? ''),
+                    'pilihan_a' => $pilihanA,
+                    'pilihan_b' => $pilihanB,
+                    'pilihan_c' => $pilihanC,
+                    'pilihan_d' => $pilihanD,
                     'jawaban_benar' => $jawabanBenar,
                     'urutan' => isset($colMap['urutan']) ? (int) ($row[$colMap['urutan']] ?? 0) : ++$maxUrutan,
                     'created_at' => now(),
