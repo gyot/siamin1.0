@@ -20,7 +20,8 @@ use App\Http\Controllers\Api\{
     LogAktivitasController,
     UnitKerjaController,
     SubUnitKerjaController,
-    TestController
+    TestController,
+    KelasController
 };
 
 Route::prefix('v1')->group(function () {
@@ -100,6 +101,15 @@ Route::prefix('v1')->group(function () {
         Route::put('test/paket/{id_paket_soal}/soal-replace', [TestController::class, 'replaceSoal']);
         Route::put('test/soal/{id_soal}', [TestController::class, 'updateSoal']);
         Route::delete('test/soal/{id_soal}', [TestController::class, 'destroySoal']);
+
+        // KELAS
+        Route::get('kelas/{id_kegiatan}', [KelasController::class, 'index']);
+        Route::post('kelas', [KelasController::class, 'store']);
+        Route::get('kelas-detail/{id_kelas}', [KelasController::class, 'show']);
+        Route::put('kelas/{id_kelas}', [KelasController::class, 'update']);
+        Route::delete('kelas/{id_kelas}', [KelasController::class, 'destroy']);
+        Route::post('kelas/{id_kelas}/anggota', [KelasController::class, 'addAnggota']);
+        Route::delete('kelas/{id_kelas}/anggota/{id_peserta}', [KelasController::class, 'removeAnggota']);
 
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
