@@ -32,6 +32,33 @@ class PenugasanPegawaiController extends BaseApiController
             'data' => $column,
         ]);
     }
+
+    public function ketuaPanitia(Request $request, $id_kegiatan)
+    {
+        $item = PenugasanPegawai::with('pegawai:id_pegawai,nama,nip')
+            ->where('id_kegiatan', $id_kegiatan)
+            ->where(function ($q) {
+                $q->where('peran', 'ketua_panitia')
+                  ->orWhere('peran', 'Ketua Panitia')
+                  ->orWhereRaw('LOWER(peran) LIKE ?', ['%ketua%panitia%']);
+            })
+            ->first();
+
+        if (!$item) {
+            return response()->json([
+                'success' => true,
+                'data' => null,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'nama' => $item->pegawai?->nama ?? '-',
+                'nip' => $item->pegawai?->nip ?? '-',
+            ],
+        ]);
+    }
     protected $rules = [
         'id_kegiatan' => 'required|exists:kegiatan,id_kegiatan',
         'id_pegawai' => 'required|exists:pegawai,id_pegawai',

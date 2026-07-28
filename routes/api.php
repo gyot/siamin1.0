@@ -53,6 +53,7 @@ Route::prefix('v1')->group(function () {
     Route::get('evaluasi/{id_kegiatan}/{id_tpk?}/statistik', [EvaluasiController::class, 'statistik']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
+    Route::get('penugasan/ketua-panitia/{id_kegiatan}', [PenugasanPegawaiController::class, 'ketuaPanitia']);
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
     Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
     Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
