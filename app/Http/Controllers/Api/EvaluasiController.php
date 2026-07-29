@@ -16,7 +16,9 @@ class EvaluasiController extends Controller
 
             foreach ($evaluasis as $evaluasi) {
 
-                $fasilitator = json_decode($evaluasi->fasilitator, true);
+                $fasilitator = is_array($evaluasi->fasilitator)
+                    ? $evaluasi->fasilitator
+                    : json_decode($evaluasi->fasilitator, true);
 
                 if (!$fasilitator) {
                     continue;
