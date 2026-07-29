@@ -163,7 +163,15 @@ class EvaluasiController extends Controller
         $semuaSkorFasilitator = collect();
 
         foreach ($evaluasi as $item) {
-            foreach ((array) $item->fasilitator as $fasilitator) {
+            $fasilitatorData = $item->fasilitator;
+            if (is_string($fasilitatorData)) {
+                $fasilitatorData = json_decode($fasilitatorData, true);
+            }
+            if (!is_array($fasilitatorData)) {
+                continue;
+            }
+
+            foreach ($fasilitatorData as $fasilitator) {
                 $nama = trim((string) ($fasilitator['nama'] ?? ''));
                 if ($nama === '') {
                     continue;
