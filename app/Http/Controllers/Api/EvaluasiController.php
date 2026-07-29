@@ -193,12 +193,23 @@ class EvaluasiController extends Controller
 
         $detailFasilitator = collect($detailFasilitator)
             ->map(function ($item) {
+                $buildDist = fn ($scores) => [
+                    '1' => collect($scores)->filter(fn ($s) => (int) $s === 1)->count(),
+                    '2' => collect($scores)->filter(fn ($s) => (int) $s === 2)->count(),
+                    '3' => collect($scores)->filter(fn ($s) => (int) $s === 3)->count(),
+                    '4' => collect($scores)->filter(fn ($s) => (int) $s === 4)->count(),
+                    '5' => collect($scores)->filter(fn ($s) => (int) $s === 5)->count(),
+                ];
+
                 return [
                     'nama' => $item['nama'],
                     'jumlah_penilaian' => $item['jumlah_penilaian'],
                     'rata_rata_penguasaan' => $this->roundAverage(collect($item['penguasaan'] ?? [])),
                     'rata_rata_sistematika' => $this->roundAverage(collect($item['sistematika'] ?? [])),
                     'rata_rata_sikap' => $this->roundAverage(collect($item['sikap'] ?? [])),
+                    'distribusi_penguasaan' => $buildDist($item['penguasaan'] ?? []),
+                    'distribusi_sistematika' => $buildDist($item['sistematika'] ?? []),
+                    'distribusi_sikap' => $buildDist($item['sikap'] ?? []),
                 ];
             })
             ->sortBy('nama')
@@ -222,12 +233,18 @@ class EvaluasiController extends Controller
                 $item->layanan_konsumsi,
             ]);
 
-            foreach ((array) $item->fasilitator as $fasilitator) {
-                $evaluationScores = $evaluationScores->merge([
-                    (int) ($fasilitator['penguasaan_materi'] ?? 0),
-                    (int) ($fasilitator['sistematika'] ?? 0),
-                    (int) ($fasilitator['sikap'] ?? 0),
-                ]);
+            $fasilitatorData2 = $item->fasilitator;
+            if (is_string($fasilitatorData2)) {
+                $fasilitatorData2 = json_decode($fasilitatorData2, true);
+            }
+            if (is_array($fasilitatorData2)) {
+                foreach ($fasilitatorData2 as $fasilitator) {
+                    $evaluationScores = $evaluationScores->merge([
+                        (int) ($fasilitator['penguasaan_materi'] ?? 0),
+                        (int) ($fasilitator['sistematika'] ?? 0),
+                        (int) ($fasilitator['sikap'] ?? 0),
+                    ]);
+                }
             }
 
             $stars = (int) round($this->roundAverage($evaluationScores, 4));
