@@ -31,7 +31,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
         Route::post('/login-peserta', [AuthController::class, 'loginPeserta']);
     });
-
+Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFasilitator'])
+    ->name('evaluasi.random');
 
     // KEGIATAN & PESERTA TANPA LOGIN
     Route::get('kegiatan/statistik', [KegiatanController::class, 'statistik']);

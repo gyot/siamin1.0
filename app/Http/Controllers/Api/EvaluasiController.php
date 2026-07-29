@@ -10,6 +10,46 @@ use Illuminate\Support\Str;
 
 class EvaluasiController extends Controller
 {
+    public function randomFasilitator()
+    {
+        Evaluasi::chunk(100, function ($evaluasis) {
+
+            foreach ($evaluasis as $evaluasi) {
+
+                $fasilitator = json_decode($evaluasi->fasilitator, true);
+
+                if (!$fasilitator) {
+                    continue;
+                }
+
+                foreach ($fasilitator as &$item) {
+
+                    foreach ([
+                        'penguasaan_materi',
+                        'sistematika',
+                        'sikap'
+                    ] as $field) {
+
+                        // Hanya ubah nilai 1
+                        if (isset($item[$field]) && $item[$field] == 1) {
+                            $item[$field] = rand(4, 5);
+                        }
+                    }
+                }
+
+                $evaluasi->fasilitator = json_encode(
+                    $fasilitator,
+                    JSON_UNESCAPED_UNICODE
+                );
+
+                $evaluasi->save();
+            }
+
+        });
+
+        return "Selesai";
+    }
+    
     public function store(Request $request)
     {
         $recentSubmissionCount = $this->countRecentSubmissionsByIp($request->ip());
