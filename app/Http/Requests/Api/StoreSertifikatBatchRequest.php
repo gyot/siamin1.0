@@ -15,6 +15,9 @@ class StoreSertifikatBatchRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Mendukung form edit lama yang masih mengirim POST ke endpoint store.
+            // Bila nilai ini dikirim, controller akan memperbarui batch tersebut.
+            'id_batch' => ['sometimes', 'integer', 'exists:sertifikat_batch,id_batch'],
             'id_kegiatan' => ['required', 'exists:kegiatan,id_kegiatan'],
             'nomor_sertifikat' => ['required', 'string', 'max:150'],
             'id_penandatangan' => ['nullable', 'exists:pegawai,id_pegawai'],

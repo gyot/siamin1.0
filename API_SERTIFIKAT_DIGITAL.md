@@ -266,6 +266,10 @@ Response sukses:
 
 `PATCH /api/v1/sertifikat-batch/{id_batch}`
 
+Gunakan `PATCH` atau `PUT` untuk pembaruan. Sebagai kompatibilitas dengan form lama,
+`POST /api/v1/sertifikat-batch` maupun `POST /api/v1/sertifikat` yang menyertakan
+`id_batch` juga akan memperbarui batch tersebut dan tidak membuat record baru.
+
 Contoh payload:
 
 ```json

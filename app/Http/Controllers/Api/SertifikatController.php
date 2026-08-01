@@ -35,6 +35,15 @@ class SertifikatController extends Controller
     public function store(StoreSertifikatBatchRequest $request)
     {
         $validated = $request->validated();
+        $idBatch = $validated['id_batch'] ?? null;
+        unset($validated['id_batch']);
+
+        // Kompatibilitas untuk klien yang mengirim POST saat menyunting data.
+        // POST dengan id_batch tidak boleh membuat batch baru.
+        if ($idBatch) {
+            return $this->updateExistingBatch($request, $validated, $idBatch);
+        }
+
         $storedFile = null;
 
         if ($request->hasFile('template_file')) {
@@ -57,6 +66,46 @@ class SertifikatController extends Controller
             'message' => 'Sertifikat batch berhasil dibuat.',
             'data' => new SertifikatResource($batch),
         ], 201);
+    }
+
+    private function updateExistingBatch(Request $request, array $validated, int $idBatch)
+    {
+        $batch = SertifikatBatch::findOrFail($idBatch);
+        $oldTemplateFile = $batch->template_file;
+        $newTemplateFile = null;
+        $deleteOldTemplateFile = false;
+
+        if ($request->hasFile('template_file')) {
+            $newTemplateFile = $request->file('template_file')->store('template_sertifikat', 'public');
+            $validated['template_file'] = $newTemplateFile;
+            $deleteOldTemplateFile = true;
+        } elseif ($request->exists('template_file') && blank($request->input('template_file'))) {
+            $validated['template_file'] = null;
+            $deleteOldTemplateFile = true;
+        } else {
+            unset($validated['template_file']);
+        }
+
+        try {
+            $batch->update($validated);
+        } catch (\Throwable $e) {
+            if ($newTemplateFile && Storage::disk('public')->exists($newTemplateFile)) {
+                Storage::disk('public')->delete($newTemplateFile);
+            }
+            throw $e;
+        }
+
+        if ($deleteOldTemplateFile && $oldTemplateFile && Storage::disk('public')->exists($oldTemplateFile)) {
+            Storage::disk('public')->delete($oldTemplateFile);
+        }
+
+        $batch->load(['kegiatan', 'penandatangan', 'sertifikatPeserta.peserta']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sertifikat batch berhasil diperbarui.',
+            'data' => new SertifikatResource($batch),
+        ]);
     }
 
     public function show($id)
