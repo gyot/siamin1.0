@@ -298,6 +298,41 @@ class SertifikatController extends Controller
         return response()->json(['success' => true, 'message' => 'Sertifikat peserta berhasil dihapus.']);
     }
 
+    public function updateStatusByPeserta(Request $request)
+    {
+        $validated = $request->validate([
+            'id_peserta' => ['required', 'integer'],
+            'id_kegiatan' => ['nullable', 'integer'],
+            'status' => ['required', Rule::in(['draft', 'terbit', 'dicabut'])],
+        ]);
+
+        $query = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta'])
+            ->where('id_peserta', $validated['id_peserta']);
+
+        if (!empty($validated['id_kegiatan'])) {
+            $query->whereHas('batch', function ($q) use ($validated) {
+                $q->where('id_kegiatan', $validated['id_kegiatan']);
+            });
+        }
+
+        $sertifikat = $query->first();
+
+        if (!$sertifikat) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sertifikat peserta tidak ditemukan. Buat sertifikat terlebih dahulu.',
+            ], 404);
+        }
+
+        $sertifikat->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status sertifikat berhasil diperbarui.',
+            'data' => new SertifikatPesertaResource($sertifikat->refresh()->load(['batch.kegiatan', 'batch.penandatangan', 'peserta'])),
+        ]);
+    }
+
     /**
      * Get sertifikat data by id_peserta from sertifikat_peserta table
      */
