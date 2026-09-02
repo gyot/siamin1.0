@@ -17,6 +17,14 @@ class SertifikatPesertaResource extends JsonResource
             'status' => $this->status,
             'batch' => new SertifikatBatchResource($this->whenLoaded('batch')),
             'peserta' => $this->whenLoaded('peserta'),
+            'lokasi' => $this->when(
+                $this->relationLoaded('peserta') && $this->peserta?->relationLoaded('tpk'),
+                fn () => [
+                    'id_tpk' => $this->peserta->tpk?->id_tpk,
+                    'lokasi' => $this->peserta->tpk?->lokasi,
+                    'kabupaten_kota' => $this->peserta->tpk?->kabupaten_kota,
+                ]
+            ),
             'kegiatan' => $this->when(
                 $this->relationLoaded('batch') && $this->batch?->relationLoaded('kegiatan'),
                 fn () => $this->batch->kegiatan
