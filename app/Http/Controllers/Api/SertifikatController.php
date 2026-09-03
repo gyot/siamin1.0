@@ -127,6 +127,25 @@ class SertifikatController extends Controller
         ]);
     }
 
+    public function showByUUID($id)
+    {
+        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta.tpk'])
+            ->where('qr_token', $id)
+            ->get();
+
+        if ($sertifikat->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sertifikat untuk peserta tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => SertifikatPesertaResource::collection($sertifikat),
+        ]);
+    }
+
     public function update(UpdateSertifikatBatchRequest $request, $id)
     {
         $batch = SertifikatBatch::find($id);

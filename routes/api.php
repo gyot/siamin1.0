@@ -63,6 +63,7 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
     Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class);
+    Route::get('sertifikat/cek/{id}', [SertifikatController::class, 'showByUUID']);
 
     // TEST / PAKET SOAL (public)
     Route::get('test/peserta/{id_kegiatan}', [TestController::class, 'pesertaByKegiatan']);
