@@ -25,6 +25,14 @@ class SertifikatPesertaResource extends JsonResource
                     'kabupaten_kota' => $this->peserta->tpk?->kabupaten_kota,
                 ]
             ),
+            'kelas' => $this->when(
+                $this->relationLoaded('peserta') && $this->peserta?->relationLoaded('kelas'),
+                fn () => $this->peserta->kelas->map(fn ($k) => [
+                    'id_kelas' => $k->id_kelas,
+                    'nama_kelas' => $k->nama_kelas,
+                    'deskripsi' => $k->deskripsi,
+                ])
+            ),
             'kegiatan' => $this->when(
                 $this->relationLoaded('batch') && $this->batch?->relationLoaded('kegiatan'),
                 fn () => $this->batch->kegiatan

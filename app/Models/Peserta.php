@@ -62,4 +62,10 @@ class Peserta extends Model
     {
         return $this->hasMany(SertifikatPeserta::class, 'id_peserta', 'id_peserta');
     }
+
+    public function kelas()
+    {
+        return $this->belongsToMany(Kelas::class, 'kelas_anggota', 'id_peserta', 'id_kelas', 'id_peserta', 'id_kelas')
+            ->withTimestamps();
+    }
 }
