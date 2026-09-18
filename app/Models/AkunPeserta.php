@@ -16,6 +16,7 @@ class AkunPeserta extends Model
 
     protected $fillable = [
         'id_peserta',
+        'id_profil',
         'username',
         'password',
         'last_login',
@@ -25,5 +26,10 @@ class AkunPeserta extends Model
     public function peserta()
     {
         return $this->belongsTo(Peserta::class, 'id_peserta', 'id_peserta');
+    }
+
+    public function profil()
+    {
+        return $this->belongsTo(ProfilPeserta::class, 'id_profil', 'id_profil');
     }
 }

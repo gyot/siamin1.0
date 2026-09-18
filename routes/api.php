@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\{
     UnitKerjaController,
     SubUnitKerjaController,
     TestController,
-    KelasController
+    KelasController,
+    LaporanController
 };
 
 Route::prefix('v1')->group(function () {
@@ -30,6 +31,8 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
         Route::post('/login-peserta', [AuthController::class, 'loginPeserta']);
+        Route::post('/login', [AuthController::class, 'loginUnified']);
+        Route::post('/register', [AuthController::class, 'register']);
     });
 Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFasilitator'])
     ->name('evaluasi.random');
@@ -114,6 +117,12 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::delete('kelas/{id_kelas}', [KelasController::class, 'destroy']);
         Route::post('kelas/{id_kelas}/anggota', [KelasController::class, 'addAnggota']);
         Route::delete('kelas/{id_kelas}/anggota/{id_peserta}', [KelasController::class, 'removeAnggota']);
+
+        // LAPORAN
+        Route::get('laporan/{id_kegiatan}/draft', [LaporanController::class, 'getDraft']);
+        Route::post('laporan/{id_kegiatan}/draft', [LaporanController::class, 'saveDraft']);
+        Route::get('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'getJadwal']);
+        Route::post('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'saveJadwal']);
 
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);

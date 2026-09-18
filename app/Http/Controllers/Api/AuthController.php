@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AkunPeserta;
 use App\Models\KeanggotaanTim;
+use App\Models\Peserta;
+use App\Models\ProfilPeserta;
 use App\Models\UnitKerja;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -141,6 +144,140 @@ class AuthController extends Controller
     public function loginPeserta(Request $request)
     {
         return $this->attemptLogin($request, ['peserta']);
+    }
+
+    public function loginUnified(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $identity = $request->email;
+        $password = $request->password;
+        $field = filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'user';
+
+        // 1. Cek di tabel users (admin)
+        $user = User::with('pegawai')
+            ->where($field, $identity)
+            ->where('status', 'aktif')
+            ->first();
+
+        if ($user && Hash::check($password, $user->password)) {
+            $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $this->getRawUnitKerjaId($user));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Login berhasil',
+                'data' => [
+                    'login_as' => 'admin',
+                    'user' => $user,
+                    'unit_kerja_id' => $unitKerja->pluck('unit_kerja_id')->unique()->values(),
+                    'unit_kerja' => $unitKerja->values(),
+                    'token' => $user->createToken('siamin-api')->plainTextToken,
+                    'token_type' => 'Bearer',
+                ],
+            ]);
+        }
+
+        // 2. Cek di tabel akun_peserta
+        $akun = AkunPeserta::with('profil')
+            ->where('username', $identity)
+            ->where('status', 'aktif')
+            ->first();
+
+        if ($akun && Hash::check($password, $akun->password)) {
+            $akun->update(['last_login' => now()]);
+            $profil = $akun->profil;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Login berhasil',
+                'data' => [
+                    'login_as' => 'peserta',
+                    'user' => [
+                        'id' => $akun->id_akun_peserta,
+                        'username' => $akun->username,
+                        'role' => 'peserta',
+                        'nama' => $profil->nama_lengkap ?? $akun->username,
+                        'id_profil' => $akun->id_profil,
+                        'profil' => $profil,
+                    ],
+                    'token' => 'dummy-peserta-' . $akun->id_akun_peserta,
+                    'token_type' => 'Bearer',
+                ],
+            ]);
+        }
+
+        // 3. Tidak ditemukan
+        throw ValidationException::withMessages([
+            'email' => ['Username atau password tidak valid.'],
+        ]);
+    }
+
+    public function register(Request $request)
+    {
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'username' => 'required|string|max:100|unique:akun_peserta,username',
+            'password' => 'required|string|min:6|confirmed',
+            'nip' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'no_hp' => 'nullable|string|max:20',
+            'jenis_kelamin' => 'nullable|in:laki-laki,perempuan',
+            'tempat_lahir' => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|date',
+            'npwp_nik' => 'nullable|string|max:30',
+            'pangkat' => 'nullable|string|max:100',
+            'jabatan' => 'nullable|string|max:255',
+            'nama_instansi' => 'nullable|string|max:255',
+            'npsn' => 'nullable|string|max:8',
+            'kab_kota' => 'nullable|string|max:100',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $profil = ProfilPeserta::create([
+                'nama_lengkap' => $request->nama_lengkap,
+                'nip' => $request->nip,
+                'email' => $request->email,
+                'no_hp' => $request->no_hp,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'tempat_lahir' => $request->tempat_lahir,
+                'tanggal_lahir' => $request->tanggal_lahir,
+                'npwp_nik' => $request->npwp_nik,
+                'pangkat' => $request->pangkat,
+                'jabatan' => $request->jabatan,
+                'nama_instansi' => $request->nama_instansi,
+                'npsn' => $request->npsn,
+                'kab_kota' => $request->kab_kota,
+            ]);
+
+            $akun = AkunPeserta::create([
+                'id_profil' => $profil->id_profil,
+                'username' => $request->username,
+                'password' => Hash::make($request->password),
+                'status' => 'aktif',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registrasi berhasil. Silakan login.',
+                'data' => [
+                    'id_akun_peserta' => $akun->id_akun_peserta,
+                    'username' => $akun->username,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal registrasi: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function me(Request $request)
