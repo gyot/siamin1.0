@@ -77,6 +77,8 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::get('test/hasil/{id_peserta}/{id_paket_soal}', [TestController::class, 'hasil']);
     Route::get('test/template', [TestController::class, 'downloadTemplate']);
 
+    Route::get('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'getJadwal']);
+
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
@@ -121,7 +123,6 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         // LAPORAN
         Route::get('laporan/{id_kegiatan}/draft', [LaporanController::class, 'getDraft']);
         Route::post('laporan/{id_kegiatan}/draft', [LaporanController::class, 'saveDraft']);
-        Route::get('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'getJadwal']);
         Route::post('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'saveJadwal']);
 
         Route::post('/logout', [AuthController::class, 'logout']);
