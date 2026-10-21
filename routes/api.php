@@ -125,6 +125,10 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::post('laporan/{id_kegiatan}/draft', [LaporanController::class, 'saveDraft']);
         Route::post('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'saveJadwal']);
 
+        // PUSH NOTIFICATIONS
+        Route::post('push/register', [\App\Http\Controllers\Api\PushNotificationController::class, 'registerToken']);
+        Route::post('push/remove', [\App\Http\Controllers\Api\PushNotificationController::class, 'removeToken']);
+
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
     });

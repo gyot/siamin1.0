@@ -166,6 +166,26 @@ class PenugasanPegawaiController extends BaseApiController
 
         $item = PenugasanPegawai::create($validated);
 
+        // Kirim push notification ke pegawai yang ditambahkan
+        try {
+            $kegiatan = \App\Models\Kegiatan::find($validated['id_kegiatan']);
+            $peran = $validated['peran'] ?? 'Peserta';
+            $namaKegiatan = $kegiatan?->nama_kegiatan ?? 'kegiatan';
+
+            \App\Http\Controllers\Api\PushNotificationController::sendToUser(
+                $validated['id_pegawai'],
+                'Penugasan Baru',
+                "Anda ditambahkan dalam penugasan pada kegiatan {$namaKegiatan} sebagai {$peran}",
+                [
+                    'type' => 'penugasan',
+                    'id_kegiatan' => $validated['id_kegiatan'],
+                    'peran' => $peran,
+                ]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('[Penugasan] Gagal kirim push notification: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'data' => $this->loadResource($item),

@@ -43,4 +43,9 @@ return [
     'external_pegawai' => [
         'url' => env('EXTERNAL_PEGAWAI_URL'),
     ],
+
+    'fcm' => [
+        'server_key' => env('FCM_SERVER_KEY'),
+        'service_account' => env('FIREBASE_SERVICE_ACCOUNT', base_path('firebase-service-account.json')),
+    ],
 ];
