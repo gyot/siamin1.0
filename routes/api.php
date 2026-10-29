@@ -76,8 +76,8 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
 
     // PROTECTED
     Route::middleware('auth:sanctum')->group(function () {
-        Route::apiResource('users', UserController::class);
-        Route::apiResource('pegawai', PegawaiController::class);
+        Route::apiResource('users', UserController::class)->only(['index', 'show']);
+        Route::apiResource('pegawai', PegawaiController::class)->only(['index', 'show']);
         // Route::apiResource('peserta', PesertaController::class);
 
         // MUTASI DATA (create/update/delete wajib login)
