@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function (): void {
+            require __DIR__.'/../routes/og.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $statefulApiEnabled = filter_var(env('SANCTUM_STATEFUL_API', false), FILTER_VALIDATE_BOOL);
