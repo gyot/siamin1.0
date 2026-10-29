@@ -18,17 +18,65 @@ class PesertaController extends BaseApiController
      */
     public function index(Request $request)
     {
-        // $data = Peserta::with('kegiatan')->orderBy('created_at', 'desc')->get();
-        // return response()->json(['success' => true, 'data' => $data]);
+        $authed = auth('sanctum')->check();
 
-        $query = Peserta::with(['kegiatan', 'tpk'])
-        ->orderBy('created_at', 'desc');
+        // Akses publik wajib memfilter per kegiatan (mencegah dump massal data pribadi)
+        if (!$authed && !$request->filled('kegiatan_id')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parameter kegiatan_id wajib untuk akses publik.',
+            ], 403);
+        }
+
+        // Relasi diringkas ke kolom yang dipakai frontend (menghemat >60% payload)
+        $query = Peserta::with([
+            'kegiatan:id_kegiatan,nama_kegiatan,tanggal_mulai,tanggal_selesai,metode_pelaksanaan,status',
+            'tpk:id_tpk,id_kegiatan,lokasi,kabupaten_kota',
+        ])->orderBy('created_at', 'desc');
 
         if ($request->filled('kegiatan_id')) {
             $query->where('id_kegiatan', $request->kegiatan_id);
         }
 
+        if ($request->filled('id_peserta')) {
+            $query->where('id_peserta', $request->id_peserta);
+        }
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('nama_lengkap', 'like', "%{$s}%")
+                  ->orWhere('nip', 'like', "%{$s}%");
+            });
+        }
+
+        // Sensor kolom sensitif untuk akses tanpa login
+        $hidden = ['npwp_nik', 'nomor_rekening', 'nama_bank', 'provider_pulsa',
+                   'no_hp', 'telp_instansi', 'email', 'email_instansi'];
+
+        if ($request->filled('per_page')) {
+            $perPage = max(1, min((int) $request->per_page, $authed ? 500 : 200));
+            $paginator = $query->paginate($perPage);
+            if (!$authed) {
+                $paginator->getCollection()->makeHidden($hidden);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => array_values($paginator->items()),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ],
+            ]);
+        }
+
         $data = $query->get();
+        if (!$authed) {
+            $data->makeHidden($hidden);
+        }
 
         return response()->json([
             'success' => true,

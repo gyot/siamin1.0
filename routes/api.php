@@ -29,28 +29,28 @@ Route::prefix('v1')->group(function () {
 
     // AUTH
     Route::prefix('auth')->group(function () {
-        Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
-        Route::post('/login-peserta', [AuthController::class, 'loginPeserta']);
-        Route::post('/login', [AuthController::class, 'loginUnified']);
-        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/login-admin', [AuthController::class, 'loginAdmin'])->middleware('throttle:10,1');
+        Route::post('/login-peserta', [AuthController::class, 'loginPeserta'])->middleware('throttle:10,1');
+        Route::post('/login', [AuthController::class, 'loginUnified'])->middleware('throttle:10,1');
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:20,1');
     });
 Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFasilitator'])
     ->name('evaluasi.random');
 
-    // KEGIATAN & PESERTA TANPA LOGIN
+    // KEGIATAN & PESERTA TANPA LOGIN (read-only; mutasi dilindungi auth di bawah)
     Route::get('kegiatan/statistik', [KegiatanController::class, 'statistik']);
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::get('kegiatan/tim_kegiatan/{id}', [KegiatanController::class, 'getAllKegiatanTimKegiatan']);
     Route::get('kegiatan/tim-saya', [KegiatanController::class, 'getKegiatanTimSaya'])->middleware('auth:sanctum');
-    Route::apiResource('kegiatan', KegiatanController::class);
+    Route::apiResource('kegiatan', KegiatanController::class)->only(['index', 'show']);
     Route::get('kegiatan/{id}/peserta-sertifikat', [SertifikatPesertaController::class, 'pesertaByKegiatan']);
     Route::get('kegiatan/{id}/sertifikat-batch', [SertifikatBatchController::class, 'byKegiatan']);
-    Route::apiResource('kegiatan-atk', KegiatanAtkController::class);
-    Route::apiResource('tpk', TpkController::class);
+    Route::apiResource('kegiatan-atk', KegiatanAtkController::class)->only(['index', 'show']);
+    Route::apiResource('tpk', TpkController::class)->only(['index', 'show']);
     Route::get('peserta/{id}/kegiatan', [PesertaController::class, 'showWithKegiatan']);
-    Route::apiResource('peserta', PesertaController::class);
-    Route::apiResource('unit-kerja', UnitKerjaController::class);
+    Route::apiResource('peserta', PesertaController::class)->only(['index', 'show']);
+    Route::apiResource('unit-kerja', UnitKerjaController::class)->only(['index', 'show']);
     Route::get('unit-kerja/user/{id}', [UnitKerjaController::class, 'unit_user']);
     Route::post('evaluasi', [EvaluasiController::class, 'store']);
     Route::get('evaluasi/check/{id_kegiatan}/{id_tpk?}', [EvaluasiController::class, 'check']);
@@ -58,14 +58,9 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     Route::get('penugasan/ketua-panitia/{id_kegiatan}', [PenugasanPegawaiController::class, 'ketuaPanitia']);
-    Route::apiResource('sertifikat-batch', SertifikatBatchController::class);
-    Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
-    Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
+    Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['index', 'show']);
     Route::get('sertifikat/peserta/{id_peserta}', [SertifikatController::class, 'byPeserta']);
-    Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
-    Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
-    Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
-    Route::apiResource('sertifikat', SertifikatController::class);
+    Route::apiResource('sertifikat', SertifikatController::class)->only(['index', 'show']);
     Route::get('sertifikat/cek/{id}', [SertifikatController::class, 'showByUUID']);
 
     // TEST / PAKET SOAL (public)
@@ -84,6 +79,20 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::apiResource('users', UserController::class);
         Route::apiResource('pegawai', PegawaiController::class);
         // Route::apiResource('peserta', PesertaController::class);
+
+        // MUTASI DATA (create/update/delete wajib login)
+        Route::apiResource('kegiatan', KegiatanController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('peserta', PesertaController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('kegiatan-atk', KegiatanAtkController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('tpk', TpkController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('unit-kerja', UnitKerjaController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('sertifikat', SertifikatController::class)->only(['store', 'update', 'destroy']);
+        Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
+        Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
+        Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
+        Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
+        Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
