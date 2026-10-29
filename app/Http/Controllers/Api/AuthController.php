@@ -197,13 +197,14 @@ class AuthController extends Controller
                     'login_as' => 'peserta',
                     'user' => [
                         'id' => $akun->id_akun_peserta,
+                        'id_peserta' => $akun->id_peserta,
                         'username' => $akun->username,
                         'role' => 'peserta',
                         'nama' => $profil->nama_lengkap ?? $akun->username,
                         'id_profil' => $akun->id_profil,
                         'profil' => $profil,
                     ],
-                    'token' => 'dummy-peserta-' . $akun->id_akun_peserta,
+                    'token' => $akun->createToken('siamin-api')->plainTextToken,
                     'token_type' => 'Bearer',
                 ],
             ]);
@@ -282,7 +283,29 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = $request->user()->load('pegawai');
+        $authUser = $request->user();
+
+        // Akun peserta: payload ringkas tanpa relasi pegawai
+        if ($authUser instanceof \App\Models\AkunPeserta) {
+            $profil = $authUser->profil;
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'login_as' => 'peserta',
+                    'user' => [
+                        'id' => $authUser->id_akun_peserta,
+                        'id_peserta' => $authUser->id_peserta,
+                        'username' => $authUser->username,
+                        'role' => 'peserta',
+                        'nama' => $profil->nama_lengkap ?? $authUser->username,
+                        'id_profil' => $authUser->id_profil,
+                        'profil' => $profil,
+                    ],
+                ],
+            ]);
+        }
+
+        $user = $authUser->load('pegawai');
         $unitKerja = $this->getUnitKerjaByPegawai($user->id_pegawai, $this->getRawUnitKerjaId($user));
 
         return response()->json([
