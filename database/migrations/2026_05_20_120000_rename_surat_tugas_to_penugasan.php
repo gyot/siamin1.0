@@ -13,6 +13,11 @@ return new class extends Migration
             return;
         }
 
+        // information_schema + ALTER TABLE ... DROP FOREIGN KEY are MySQL/MariaDB-only.
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         $foreignKeys = DB::select("
             SELECT CONSTRAINT_NAME
             FROM information_schema.KEY_COLUMN_USAGE
@@ -29,6 +34,22 @@ return new class extends Migration
 
     public function up(): void
     {
+        // SQLite (test suite): only the portable structural changes apply.
+        // The MySQL-only FK/data surgery below is irrelevant for fresh test databases.
+        if (DB::getDriverName() !== 'mysql') {
+            if (Schema::hasTable('surat_tugas_pegawai') && !Schema::hasTable('penugasan_pegawai')) {
+                Schema::rename('surat_tugas_pegawai', 'penugasan_pegawai');
+            }
+
+            if (Schema::hasTable('penugasan_pegawai') && !Schema::hasColumn('penugasan_pegawai', 'id_kegiatan')) {
+                Schema::table('penugasan_pegawai', function (Blueprint $table) {
+                    $table->unsignedBigInteger('id_kegiatan')->nullable();
+                });
+            }
+
+            return;
+        }
+
         $this->dropForeignIfExists('surat_tugas_pegawai', 'id_surat_tugas');
         $this->dropForeignIfExists('penugasan_pegawai', 'id_penugasan');
         $this->dropForeignIfExists('penugasan_pegawai', 'id_kegiatan');
@@ -46,7 +67,7 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('penugasan_pegawai') && Schema::hasColumn('penugasan_pegawai', 'id_surat_tugas') && Schema::hasTable('surat_tugas')) {
+        if (DB::getDriverName() === 'mysql' && Schema::hasTable('penugasan_pegawai') && Schema::hasColumn('penugasan_pegawai', 'id_surat_tugas') && Schema::hasTable('surat_tugas')) {
             DB::statement('
                 UPDATE penugasan_pegawai pp
                 JOIN surat_tugas st ON st.id_surat_tugas = pp.id_surat_tugas
@@ -54,7 +75,7 @@ return new class extends Migration
             ');
         }
 
-        if (Schema::hasTable('penugasan_pegawai') && Schema::hasColumn('penugasan_pegawai', 'id_penugasan') && Schema::hasTable('penugasan')) {
+        if (DB::getDriverName() === 'mysql' && Schema::hasTable('penugasan_pegawai') && Schema::hasColumn('penugasan_pegawai', 'id_penugasan') && Schema::hasTable('penugasan')) {
             DB::statement('
                 UPDATE penugasan_pegawai pp
                 JOIN penugasan p ON p.id_penugasan = pp.id_penugasan
