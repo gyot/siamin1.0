@@ -69,6 +69,11 @@ class Kegiatan extends Model
         return $this->hasMany(Tpk::class, 'id_kegiatan', 'id_kegiatan');
     }
 
+    public function daftarKelas()
+    {
+        return $this->hasMany(Kelas::class, 'id_kegiatan', 'id_kegiatan');
+    }
+
     public function evaluasi()
     {
         return $this->hasMany(Evaluasi::class, 'id_kegiatan', 'id_kegiatan');

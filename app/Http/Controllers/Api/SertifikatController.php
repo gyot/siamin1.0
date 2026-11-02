@@ -110,7 +110,7 @@ class SertifikatController extends Controller
 
     public function show($id)
     {
-        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta.tpk', 'peserta.kelas'])
+        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'batch.strukturProgram', 'peserta.tpk', 'peserta.kelas'])
             ->where('id_peserta', $id)
             ->get();
 
@@ -129,7 +129,7 @@ class SertifikatController extends Controller
 
     public function showByUUID($id)
     {
-        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'peserta.tpk', 'peserta.kelas'])
+        $sertifikat = SertifikatPeserta::with(['batch.kegiatan', 'batch.penandatangan', 'batch.strukturProgram', 'peserta.tpk', 'peserta.kelas'])
             ->where('qr_token', $id)
             ->get();
 

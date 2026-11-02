@@ -41,4 +41,9 @@ class SertifikatBatch extends Model
     {
         return $this->hasMany(SertifikatPeserta::class, 'id_batch', 'id_batch');
     }
+
+    public function strukturProgram()
+    {
+        return $this->hasMany(StrukturProgram::class, 'id_batch', 'id_batch')->orderBy('urutan')->orderBy('id_struktur');
+    }
 }

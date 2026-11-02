@@ -8,6 +8,7 @@ use App\Http\Requests\Api\GenerateSertifikatRequest;
 use App\Http\Resources\SertifikatBatchResource;
 use App\Http\Resources\SertifikatPesertaResource;
 use App\Models\Peserta;
+use App\Models\Sertifikat;
 use App\Models\SertifikatBatch;
 use App\Models\SertifikatPeserta;
 use Illuminate\Http\Request;
@@ -37,14 +38,22 @@ class SertifikatPesertaController extends Controller
             ->orderBy('nama_lengkap')
             ->get();
 
-        $data = $peserta->map(function (Peserta $item) {
+        // ID sertifikat final (tabel sertifikat) dibutuhkan generator PDF
+        $sertifikatFinal = Sertifikat::query()
+            ->where('id_kegiatan', $id)
+            ->get(['id_sertifikat', 'id_peserta', 'status'])
+            ->keyBy('id_peserta');
+
+        $data = $peserta->map(function (Peserta $item) use ($sertifikatFinal) {
             $sertifikat = $item->sertifikatPeserta->first();
+            $final = $sertifikatFinal[$item->id_peserta] ?? null;
 
             return [
                 'id_peserta' => $item->id_peserta,
                 'nama_lengkap' => $item->nama_lengkap,
                 'peran' => $item->peran,
-                'status_sertifikat' => $sertifikat?->status ?? 'belum_ada',
+                'status_sertifikat' => $final?->status ?? $sertifikat?->status ?? 'belum_ada',
+                'id_sertifikat' => $final?->id_sertifikat,
                 'id_batch' => $sertifikat?->id_batch,
             ];
         });

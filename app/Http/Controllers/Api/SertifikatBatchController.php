@@ -14,7 +14,7 @@ class SertifikatBatchController extends Controller
 {
     public function index()
     {
-        $data = SertifikatBatch::with(['kegiatan', 'penandatangan'])
+        $data = SertifikatBatch::with(['kegiatan', 'penandatangan', 'strukturProgram'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -26,7 +26,7 @@ class SertifikatBatchController extends Controller
 
     public function byKegiatan($id)
     {
-        $batches = SertifikatBatch::with(['kegiatan', 'penandatangan'])
+        $batches = SertifikatBatch::with(['kegiatan', 'penandatangan', 'strukturProgram'])
             ->where('id_kegiatan', $id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -45,12 +45,13 @@ class SertifikatBatchController extends Controller
     {
         $validated = $request->validated();
         $idBatch = $validated['id_batch'] ?? null;
-        unset($validated['id_batch']);
+        $strukturProgram = $validated['struktur_program'] ?? null;
+        unset($validated['id_batch'], $validated['struktur_program']);
 
         // Kompatibilitas untuk klien yang mengirim POST saat menyunting data.
         // POST dengan id_batch tidak boleh membuat batch baru.
         if ($idBatch) {
-            return $this->updateExistingBatch($request, $validated, $idBatch);
+            return $this->updateExistingBatch($request, $validated, $idBatch, $strukturProgram);
         }
 
         $storedFile = null;
@@ -63,6 +64,11 @@ class SertifikatBatchController extends Controller
         try {
             $batch = SertifikatBatch::create($validated)
                 ->load(['kegiatan', 'penandatangan']);
+
+            if ($strukturProgram !== null) {
+                $this->syncStrukturProgram($batch, $strukturProgram);
+            }
+            $batch->load('strukturProgram');
         } catch (\Throwable $e) {
             if ($storedFile && Storage::disk('public')->exists($storedFile)) {
                 Storage::disk('public')->delete($storedFile);
@@ -78,7 +84,32 @@ class SertifikatBatchController extends Controller
         ], 201);
     }
 
-    private function updateExistingBatch(Request $request, array $validated, int $idBatch)
+    /**
+     * Sinkronkan struktur program batch (ganti semua: hapus lama + simpan baru).
+     * Item: { id_kelas: int|null, materi: string, jumlah_jam: int, urutan?: int }
+     */
+    private function syncStrukturProgram(SertifikatBatch $batch, array $items): void
+    {
+        $batch->strukturProgram()->delete();
+
+        foreach (array_values($items) as $i => $item) {
+            $materi = trim((string) ($item['materi'] ?? ''));
+            if ($materi === '') {
+                continue;
+            }
+
+            \App\Models\StrukturProgram::create([
+                'id_batch' => $batch->id_batch,
+                'id_kegiatan' => $batch->id_kegiatan,
+                'id_kelas' => $item['id_kelas'] ?? null,
+                'materi' => $materi,
+                'jumlah_jam' => (int) ($item['jumlah_jam'] ?? 0),
+                'urutan' => (int) ($item['urutan'] ?? $i),
+            ]);
+        }
+    }
+
+    private function updateExistingBatch(Request $request, array $validated, int $idBatch, ?array $strukturProgram = null)
     {
         $batch = SertifikatBatch::findOrFail($idBatch);
         $oldTemplateFile = $batch->template_file;
@@ -109,7 +140,10 @@ class SertifikatBatchController extends Controller
             Storage::disk('public')->delete($oldTemplateFile);
         }
 
-        $batch->load(['kegiatan', 'penandatangan']);
+        if ($strukturProgram !== null) {
+            $this->syncStrukturProgram($batch, $strukturProgram);
+        }
+        $batch->load(['kegiatan', 'penandatangan', 'strukturProgram']);
 
         return response()->json([
             'success' => true,
@@ -120,7 +154,7 @@ class SertifikatBatchController extends Controller
 
     public function show($id)
     {
-        $batch = SertifikatBatch::with(['kegiatan', 'penandatangan', 'sertifikatPeserta.peserta'])
+        $batch = SertifikatBatch::with(['kegiatan', 'penandatangan', 'strukturProgram', 'sertifikatPeserta.peserta'])
             ->find($id);
 
         if (!$batch) {
@@ -139,6 +173,8 @@ class SertifikatBatchController extends Controller
         }
 
         $validated = $request->validated();
+        $strukturProgram = $validated['struktur_program'] ?? null;
+        unset($validated['struktur_program']);
         $oldTemplateFile = $batch->template_file;
         $newTemplateFile = null;
         $deleteOldTemplateFile = false;
@@ -168,7 +204,10 @@ class SertifikatBatchController extends Controller
             Storage::disk('public')->delete($oldTemplateFile);
         }
 
-        $batch->load(['kegiatan', 'penandatangan']);
+        if ($strukturProgram !== null) {
+            $this->syncStrukturProgram($batch, $strukturProgram);
+        }
+        $batch->load(['kegiatan', 'penandatangan', 'strukturProgram']);
 
         return response()->json([
             'success' => true,

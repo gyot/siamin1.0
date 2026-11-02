@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\KeanggotaanTim;
 use App\Models\Kegiatan;
 use App\Models\KegiatanAtk;
+use App\Models\Kelas;
 use App\Models\Tpk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class KegiatanService
             $query->with('daftarTpk');
         }
 
+        $query->with('daftarKelas');
         $query->with('paketSoals');
 
         return $query;
@@ -35,24 +37,28 @@ class KegiatanService
         return DB::transaction(function () use ($validated) {
             $atkItems = $validated['daftar_atk'] ?? [];
             $tpkItems = $validated['daftar_tpk'] ?? [];
-            unset($validated['daftar_atk'], $validated['daftar_tpk']);
+            $kelasItems = $validated['daftar_kelas'] ?? [];
+            unset($validated['daftar_atk'], $validated['daftar_tpk'], $validated['daftar_kelas']);
 
             $kegiatan = Kegiatan::create($validated);
 
             $this->syncAtkRecords($kegiatan, $atkItems);
             $this->syncTpkRecords($kegiatan, $tpkItems);
+            // Kelas: jika tidak ada kelas yang ditambahkan -> otomatis satu "Kelas Umum"
+            $this->syncKelasRecords($kegiatan, $kelasItems, true);
 
             return $this->loadRelations($kegiatan);
         });
     }
 
-    public function update(Kegiatan $kegiatan, array $validated, bool $atkItemsProvided, bool $tpkItemsProvided, bool $paketSoalProvided = false): Kegiatan
+    public function update(Kegiatan $kegiatan, array $validated, bool $atkItemsProvided, bool $tpkItemsProvided, bool $paketSoalProvided = false, bool $kelasItemsProvided = false): Kegiatan
     {
-        return DB::transaction(function () use ($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided, $paketSoalProvided) {
+        return DB::transaction(function () use ($kegiatan, $validated, $atkItemsProvided, $tpkItemsProvided, $paketSoalProvided, $kelasItemsProvided) {
             $atkItems = $validated['daftar_atk'] ?? [];
             $tpkItems = $validated['daftar_tpk'] ?? [];
+            $kelasItems = $validated['daftar_kelas'] ?? [];
             $paketSoalIds = $validated['daftar_paket_soal'] ?? [];
-            unset($validated['daftar_atk'], $validated['daftar_tpk'], $validated['daftar_paket_soal']);
+            unset($validated['daftar_atk'], $validated['daftar_tpk'], $validated['daftar_kelas'], $validated['daftar_paket_soal']);
 
             $kegiatan->update($validated);
 
@@ -64,12 +70,71 @@ class KegiatanService
                 $this->syncTpkRecords($kegiatan, $tpkItems);
             }
 
+            if ($kelasItemsProvided) {
+                $this->syncKelasRecords($kegiatan, $kelasItems, true);
+            }
+
             if ($paketSoalProvided) {
                 $this->syncPaketSoal($kegiatan, $paketSoalIds);
             }
 
             return $this->loadRelations($kegiatan);
         });
+    }
+
+    /**
+     * Sinkronkan daftar kelas kegiatan.
+     * - item dengan id_kelas -> update
+     * - item tanpa id_kelas -> create
+     * - kelas lama yang tidak dikirim -> hapus
+     * - $ensureDefault: jika hasilnya kosong, buat satu "Kelas Umum"
+     */
+    private function syncKelasRecords(Kegiatan $kegiatan, array $kelasItems, bool $ensureDefault = false): void
+    {
+        $existing = $kegiatan->daftarKelas()->get();
+        $submittedIds = collect();
+
+        foreach ($kelasItems as $item) {
+            $nama = trim((string) ($item['nama_kelas'] ?? ''));
+            if ($nama === '') {
+                continue;
+            }
+
+            $kelas = null;
+            if (!empty($item['id_kelas'])) {
+                $kelas = $existing->firstWhere('id_kelas', (int) $item['id_kelas']);
+            }
+            if (!$kelas) {
+                $kelas = $existing->firstWhere('nama_kelas', $nama);
+            }
+
+            if ($kelas) {
+                $kelas->update([
+                    'nama_kelas' => $nama,
+                    'deskripsi' => $item['deskripsi'] ?? null,
+                ]);
+                $submittedIds->push($kelas->id_kelas);
+            } else {
+                $baru = Kelas::create([
+                    'id_kegiatan' => $kegiatan->id_kegiatan,
+                    'nama_kelas' => $nama,
+                    'deskripsi' => $item['deskripsi'] ?? null,
+                ]);
+                $submittedIds->push($baru->id_kelas);
+            }
+        }
+
+        $kegiatan->daftarKelas()
+            ->whereNotIn('id_kelas', $submittedIds->all())
+            ->delete();
+
+        if ($ensureDefault && $kegiatan->daftarKelas()->count() === 0) {
+            Kelas::create([
+                'id_kegiatan' => $kegiatan->id_kegiatan,
+                'nama_kelas' => 'Kelas Umum',
+                'deskripsi' => null,
+            ]);
+        }
     }
 
     public function delete(Kegiatan $kegiatan): void
@@ -82,6 +147,8 @@ class KegiatanService
             if ($this->hasTpkTable()) {
                 $kegiatan->daftarTpk()->delete();
             }
+
+            $kegiatan->daftarKelas()->delete();
 
             $kegiatan->delete();
         });
@@ -154,6 +221,8 @@ class KegiatanService
         } else {
             $kegiatan->setRelation('daftarTpk', collect());
         }
+
+        $relations[] = 'daftarKelas';
 
         return $kegiatan->load($relations);
     }

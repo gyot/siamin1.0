@@ -23,6 +23,7 @@ class SertifikatBatchResource extends JsonResource
             'status' => $this->status,
             'kegiatan' => $this->whenLoaded('kegiatan'),
             'penandatangan' => $this->whenLoaded('penandatangan'),
+            'struktur_program' => $this->whenLoaded('strukturProgram'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
