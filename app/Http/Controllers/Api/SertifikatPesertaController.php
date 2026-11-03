@@ -54,6 +54,7 @@ class SertifikatPesertaController extends Controller
                 'peran' => $item->peran,
                 'status_sertifikat' => $final?->status ?? $sertifikat?->status ?? 'belum_ada',
                 'id_sertifikat' => $final?->id_sertifikat,
+                'id_sertifikat_peserta' => $sertifikat?->id,
                 'id_batch' => $sertifikat?->id_batch,
             ];
         });

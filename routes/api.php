@@ -87,12 +87,12 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::apiResource('tpk', TpkController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('unit-kerja', UnitKerjaController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['store', 'update', 'destroy']);
+        Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
         Route::apiResource('sertifikat', SertifikatController::class)->only(['store', 'update', 'destroy']);
         Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
         Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
         Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
         Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
-        Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
