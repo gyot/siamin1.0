@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\{
     EvaluasiController,
     KegiatanAtkController,
     PesertaController,
+    IntegrasiPesertaController,
     TpkController,
     SertifikatController,
     SertifikatBatchController,
@@ -83,6 +84,9 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         // MUTASI DATA (create/update/delete wajib login)
         Route::apiResource('kegiatan', KegiatanController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('peserta', PesertaController::class)->only(['store', 'update', 'destroy']);
+        // API integrasi untuk aplikasi lain (Bearer token)
+        Route::get('integrasi/peserta', [IntegrasiPesertaController::class, 'index']);
+        Route::get('integrasi/peserta/{id}', [IntegrasiPesertaController::class, 'show']);
         Route::apiResource('kegiatan-atk', KegiatanAtkController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('tpk', TpkController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('unit-kerja', UnitKerjaController::class)->only(['store', 'update', 'destroy']);
