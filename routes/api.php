@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\{
     KegiatanAtkController,
     PesertaController,
     IntegrasiPesertaController,
+    ApiTokenController,
     TpkController,
     SertifikatController,
     SertifikatBatchController,
@@ -87,6 +88,10 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         // API integrasi untuk aplikasi lain (Bearer token)
         Route::get('integrasi/peserta', [IntegrasiPesertaController::class, 'index']);
         Route::get('integrasi/peserta/{id}', [IntegrasiPesertaController::class, 'show']);
+        // Manajemen API token (admin only)
+        Route::get('api-tokens', [ApiTokenController::class, 'index']);
+        Route::post('api-tokens', [ApiTokenController::class, 'store']);
+        Route::delete('api-tokens/{id}', [ApiTokenController::class, 'destroy']);
         Route::apiResource('kegiatan-atk', KegiatanAtkController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('tpk', TpkController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('unit-kerja', UnitKerjaController::class)->only(['store', 'update', 'destroy']);
