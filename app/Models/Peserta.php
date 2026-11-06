@@ -39,6 +39,7 @@ class Peserta extends Model
         'nama_bank',
         'no_surat_tugas',
         'tanggal_surat_tugas',
+        'npsn',
         'peran',
         'tanda_tangan',
     ];
