@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\{
     EvaluasiController,
     KegiatanAtkController,
     PesertaController,
+    SekolahController,
     IntegrasiPesertaController,
     ApiTokenController,
     TpkController,
@@ -88,6 +89,8 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         // API integrasi untuk aplikasi lain (Bearer token)
         Route::get('integrasi/peserta', [IntegrasiPesertaController::class, 'index']);
         Route::get('integrasi/peserta/{id}', [IntegrasiPesertaController::class, 'show']);
+        Route::get('sekolah', [SekolahController::class, 'index']);
+        Route::get('peserta-all', [PesertaController::class, 'all']);
         // Manajemen API token (admin only)
         Route::get('api-tokens', [ApiTokenController::class, 'index']);
         Route::post('api-tokens', [ApiTokenController::class, 'store']);

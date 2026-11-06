@@ -6,6 +6,7 @@ use App\Models\Peserta;
 use App\Models\SertifikatBatch;
 use App\Models\SertifikatPeserta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -292,8 +293,64 @@ class PesertaController extends BaseApiController
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Daftar peserta keseluruhan (semua kegiatan) dengan pagination,
+     * pencarian, dan pengurutan sisi server.
      */
+    public function all(Request $request)
+    {
+        $q = trim((string) $request->input('q', ''));
+        $allowedSort = [
+            'nama_lengkap', 'nip', 'pangkat', 'gol', 'jabatan', 'no_hp', 'email',
+            'npwp_nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
+            'nama_instansi', 'npsn', 'alamat_instansi', 'kab_kota', 'provinsi',
+            'peran', 'no_surat_tugas', 'tanggal_surat_tugas', 'nama_kegiatan', 'created_at',
+        ];
+        $sortBy = $request->input('sort_by', 'nama_lengkap');
+        if (!in_array($sortBy, $allowedSort, true)) {
+            $sortBy = 'nama_lengkap';
+        }
+        $sortDir = strtolower((string) $request->input('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $perPage = (int) $request->input('per_page', 10);
+        if ($perPage < 1 || $perPage > 100) {
+            $perPage = 10;
+        }
+        $page = max((int) $request->input('page', 1), 1);
+
+        $sortColumn = $sortBy === 'nama_kegiatan' ? 'kegiatan.nama_kegiatan' : 'peserta.' . $sortBy;
+
+        $query = DB::table('peserta')
+            ->leftJoin('kegiatan', 'peserta.id_kegiatan', '=', 'kegiatan.id_kegiatan')
+            ->select('peserta.*', 'kegiatan.nama_kegiatan');
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q) {
+                $w->where('peserta.nama_lengkap', 'like', "%{$q}%")
+                    ->orWhere('peserta.nip', 'like', "%{$q}%")
+                    ->orWhere('peserta.nama_instansi', 'like', "%{$q}%")
+                    ->orWhere('peserta.npsn', 'like', "%{$q}%")
+                    ->orWhere('peserta.kab_kota', 'like', "%{$q}%")
+                    ->orWhere('kegiatan.nama_kegiatan', 'like', "%{$q}%");
+            });
+        }
+
+        $total = (clone $query)->count();
+        $rows = $query->orderBy($sortColumn, $sortDir)
+            ->skip(($page - 1) * $perPage)
+            ->take($perPage)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $rows,
+            'meta' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => max((int) ceil($total / $perPage), 1),
+            ],
+        ]);
+    }
+
     public function destroy($id)
     {
         try {
