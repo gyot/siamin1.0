@@ -232,4 +232,27 @@ class SertifikatBatchController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Batch sertifikat berhasil dihapus.']);
     }
+
+    /**
+     * Unduh file template sertifikat batch yang sudah diunggah.
+     * Pola POST seperti unduh sertifikat: request POST → server mengirim file.
+     */
+    public function downloadTemplateFile(Request $request)
+    {
+        $validated = $request->validate([
+            'template_file' => ['required', 'string', 'regex:/^(storage\/)?template_sertifikat\/[A-Za-z0-9._-]+$/'],
+        ], [
+            'template_file.regex' => 'Path template tidak valid.',
+        ]);
+
+        $path = preg_replace('#^storage/#', '', $validated['template_file']);
+
+        if (!Storage::disk('public')->exists($path)) {
+            return response()->json(['success' => false, 'message' => 'File template tidak ditemukan.'], 404);
+        }
+
+        return Storage::disk('public')->download($path, basename($path), [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]);
+    }
 }

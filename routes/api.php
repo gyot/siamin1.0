@@ -61,6 +61,7 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     Route::get('penugasan/ketua-panitia/{id_kegiatan}', [PenugasanPegawaiController::class, 'ketuaPanitia']);
+    Route::post('sertifikat-batch/template-file', [SertifikatBatchController::class, 'downloadTemplateFile']);
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['index', 'show']);
     Route::get('sertifikat/peserta/{id_peserta}', [SertifikatController::class, 'byPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class)->only(['index', 'show']);
