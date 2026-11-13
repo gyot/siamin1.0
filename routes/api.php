@@ -76,6 +76,10 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::post('sertifikat-batch/{id}/ajukan-ulang', [PengajuanSertifikatController::class, 'ajukanUlang']);
         // Pratinjau PDF contoh (draft) dari template batch — data contoh, tanpa ubah DB.
         Route::post('sertifikat-batch/{id}/draft-pdf', [SertifikatBatchController::class, 'draftPdf']);
+        // Level 2: status sertifikat PER PESERTA pada satu batch (lihat SertifikatController).
+        Route::get('sertifikat-batch/{id}/peserta-status', [SertifikatController::class, 'pesertaStatus']);
+        Route::patch('sertifikat-batch/{id}/status-peserta', [SertifikatController::class, 'ubahStatusPesertaBatch']);
+        Route::post('sertifikat-batch/{id}/terbitkan', [SertifikatController::class, 'terbitkanPeserta']);
     });
 
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['index', 'show']);
