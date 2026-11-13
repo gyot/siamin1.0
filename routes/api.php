@@ -63,6 +63,10 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     Route::get('penugasan/ketua-panitia/{id_kegiatan}', [PenugasanPegawaiController::class, 'ketuaPanitia']);
     Route::post('sertifikat-batch/template-file', [SertifikatBatchController::class, 'downloadTemplateFile']);
+    // Data untuk PDF contoh (draft) — diambil layanan generator Node (server-to-server,
+    // tanpa sesi pengguna) saat tombol "Unduh Draft" dipanggil; read-only, tanpa data
+    // peserta, paparannya setara GET sertifikat-batch/{id} yang sudah publik.
+    Route::get('sertifikat-batch/{id}/draft-data', [SertifikatBatchController::class, 'draftData']);
     // ALUR PENGAJUAN SERTIFIKAT (naskah) — wajib login.
     // Didaftarkan SEBELUM apiResource('sertifikat-batch') agar "pengajuan"/"proses" tidak
     // tertangkap route show {id} (urutan pendaftaran route menentukan).
@@ -74,8 +78,6 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::post('sertifikat-batch/{id}/tolak', [PengajuanSertifikatController::class, 'tolak']);
         Route::post('sertifikat-batch/{id}/proses', [PengajuanSertifikatController::class, 'proses']);
         Route::post('sertifikat-batch/{id}/ajukan-ulang', [PengajuanSertifikatController::class, 'ajukanUlang']);
-        // Pratinjau PDF contoh (draft) dari template batch — data contoh, tanpa ubah DB.
-        Route::post('sertifikat-batch/{id}/draft-pdf', [SertifikatBatchController::class, 'draftPdf']);
         // Level 2: status sertifikat PER PESERTA pada satu batch (lihat SertifikatController).
         Route::get('sertifikat-batch/{id}/peserta-status', [SertifikatController::class, 'pesertaStatus']);
         Route::patch('sertifikat-batch/{id}/status-peserta', [SertifikatController::class, 'ubahStatusPesertaBatch']);

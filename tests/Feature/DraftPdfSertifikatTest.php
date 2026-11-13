@@ -7,70 +7,22 @@ use App\Models\Pegawai;
 use App\Models\SertifikatBatch;
 use App\Models\SertifikatPeserta;
 use App\Models\StrukturProgram;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * POST /api/v1/sertifikat-batch/{id}/draft-pdf — PDF contoh (draft) dari template
- * batch untuk pratinjau peninjau: data contoh bertanda jelas, materi/JP dari
- * struktur_program (filter id_kelas opsional), penandatangan dari data batch.
- * Endpoint tidak mengubah data dan tidak memerlukan data peserta.
+ * GET /api/v1/sertifikat-batch/{id}/draft-data — data untuk PDF contoh (draft)
+ * dari template batch: diambil layanan generator Node (POST /generate-certificate/draft)
+ * yang merender docx -> PDF dengan pipeline yang sama dengan sertifikat peserta.
+ * Berisi template_file_url, struktur_program (filter id_kelas opsional, fallback
+ * kelas umum), penandatangan, dan data contoh berpenanda CONTOH/DRAFT.
+ * Endpoint tidak mengubah data, tidak memerlukan data peserta, dan tidak memakai
+ * shell_exec — konversi PDF sepenuhnya di layanan generator.
  */
 class DraftPdfSertifikatTest extends TestCase
 {
     use RefreshDatabase;
-
-    private function login(): void
-    {
-        $user = new User();
-        $user->id_user = 99;
-        $this->actingAs($user, 'sanctum');
-    }
-
-    /**
-     * Template docx minimal berisi tag docxtemplater (termasuk loop baris tabel).
-     */
-    private function templateDocxBinary(): string
-    {
-        $docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
-            . '<w:p><w:r><w:t>SERTIFIKAT {nomor_sertifikat}</w:t></w:r></w:p>'
-            . '<w:p><w:r><w:t>{nama} - {instansi} - {tpk}</w:t></w:r></w:p>'
-            . '<w:tbl>'
-            . '<w:tr><w:tc><w:p><w:r><w:t>{#struktur_program}{materi}</w:t></w:r></w:p></w:tc>'
-            . '<w:tc><w:p><w:r><w:t>{jumlah_jam}{/struktur_program}</w:t></w:r></w:p></w:tc></w:tr>'
-            . '</w:tbl>'
-            . '<w:p><w:r><w:t>Total Jam: {total_jam} JP</w:t></w:r></w:p>'
-            . '<w:p><w:r><w:t>{penanda_tangan} - {jabatan_penandatangan} - {penanda_tangan_nip}</w:t></w:r></w:p>'
-            . '</w:body></w:document>';
-
-        $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-            . '<Default Extension="xml" ContentType="application/xml"/>'
-            . '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-            . '</Types>';
-
-        $rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
-            . '</Relationships>';
-
-        $path = tempnam(sys_get_temp_dir(), 'tpl-draft-');
-        $zip = new \ZipArchive();
-        $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        $zip->addFromString('[Content_Types].xml', $contentTypes);
-        $zip->addFromString('_rels/.rels', $rels);
-        $zip->addFromString('word/document.xml', $docXml);
-        $zip->close();
-
-        $binary = (string) file_get_contents($path);
-        @unlink($path);
-
-        return $binary;
-    }
 
     private function buatBatch(array $overrides = []): SertifikatBatch
     {
@@ -103,65 +55,77 @@ class DraftPdfSertifikatTest extends TestCase
         ]);
     }
 
-    public function test_draft_pdf_mengembalikan_pdf_untuk_batch_valid(): void
+    public function test_draft_data_mengembalikan_data_contoh_untuk_batch_valid(): void
     {
-        $this->login();
         Storage::fake('public');
-        Storage::disk('public')->put('template_sertifikat/contoh.docx', $this->templateDocxBinary());
+        Storage::disk('public')->put('template_sertifikat/contoh.docx', 'isi template');
 
         $batch = $this->buatBatch();
         $this->buatStruktur($batch, null, 'Materi Umum', 2, 0);
 
-        $response = $this->postJson("/api/v1/sertifikat-batch/{$batch->id_batch}/draft-pdf");
+        $response = $this->getJson("/api/v1/sertifikat-batch/{$batch->id_batch}/draft-data");
 
         $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'application/pdf');
-        ob_start();
-        $response->sendContent();
-        $content = ob_get_clean();
-        $this->assertStringStartsWith('%PDF', $content);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.id_batch', $batch->id_batch);
+        $this->assertStringContainsString(
+            'template_sertifikat/contoh.docx',
+            (string) $response->json('data.template_file_url')
+        );
+
+        // Data contoh berpenanda CONTOH/DRAFT.
+        $response->assertJsonPath('data.contoh.nama', 'CONTOH PESERTA - DRAFT');
+        $response->assertJsonPath('data.contoh.instansi', 'CONTOH INSTANSI');
+        $response->assertJsonPath('data.contoh.status', 'DRAFT');
+
+        // Penandatangan dari data batch (pegawai).
+        $response->assertJsonPath('data.penandatangan.nama', 'Budi Penandatangan');
+        $response->assertJsonPath('data.penandatangan.nama_jabatan', 'Kepala BPMP');
+        $response->assertJsonPath('data.penandatangan.nip', '198001012010011001');
+
+        // Struktur program: kelas umum (id_kelas null).
+        $response->assertJsonPath('data.struktur_program.0.materi', 'Materi Umum');
+        $response->assertJsonPath('data.struktur_program.0.jumlah_jam', 2);
+        $response->assertJsonPath('data.total_jam', 2);
 
         // Endpoint tidak menulis/mengubah data apa pun.
         $this->assertSame(0, SertifikatPeserta::count());
         $this->assertSame('diajukan', $batch->fresh()->status);
     }
 
-    public function test_draft_pdf_menerima_filter_id_kelas(): void
+    public function test_draft_data_menerima_filter_id_kelas(): void
     {
-        $this->login();
         Storage::fake('public');
-        Storage::disk('public')->put('template_sertifikat/contoh.docx', $this->templateDocxBinary());
+        Storage::disk('public')->put('template_sertifikat/contoh.docx', 'isi template');
 
         $batch = $this->buatBatch();
         $this->buatStruktur($batch, null, 'Materi Umum', 2, 0);
         $this->buatStruktur($batch, 77, 'Materi Kelas 77', 3, 1);
 
-        $response = $this->postJson("/api/v1/sertifikat-batch/{$batch->id_batch}/draft-pdf", [
-            'id_kelas' => 77,
-        ]);
+        $response = $this->getJson("/api/v1/sertifikat-batch/{$batch->id_batch}/draft-data?id_kelas=77");
 
         $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'application/pdf');
+        $rows = $response->json('data.struktur_program');
+        $this->assertCount(1, $rows);
+        $this->assertSame('Materi Kelas 77', $rows[0]['materi']);
+        $response->assertJsonPath('data.total_jam', 3);
     }
 
     public function test_batch_tidak_ada_memberi_404(): void
     {
-        $this->login();
-
-        $response = $this->postJson('/api/v1/sertifikat-batch/999/draft-pdf');
+        $response = $this->getJson('/api/v1/sertifikat-batch/999/draft-data');
 
         $response->assertStatus(404);
     }
 
     public function test_template_tidak_ada_memberi_404(): void
     {
-        $this->login();
         Storage::fake('public');
-
         $batch = $this->buatBatch();
 
-        $response = $this->postJson("/api/v1/sertifikat-batch/{$batch->id_batch}/draft-pdf");
+        $response = $this->getJson("/api/v1/sertifikat-batch/{$batch->id_batch}/draft-data");
 
         $response->assertStatus(404);
+        $response->assertJsonPath('message', 'File template tidak ditemukan.');
     }
 }
