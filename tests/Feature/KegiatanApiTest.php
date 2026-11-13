@@ -15,8 +15,12 @@ class KegiatanApiTest extends TestCase
 
     public function test_store_kegiatan_auto_resolves_unit_kerja_id_from_keanggotaan_tim(): void
     {
-        $user = new User();
-        $user->id = 99;
+        $user = User::forceCreate([
+            'id_user' => 99,
+            'email' => 'user99@example.test',
+            'user' => 'user99',
+            'password' => 'password',
+        ]);
         $this->actingAs($user, 'sanctum');
 
         $pegawai = Pegawai::create([
@@ -56,8 +60,12 @@ class KegiatanApiTest extends TestCase
 
     public function test_store_kegiatan_returns_validation_error_when_pegawai_has_multiple_units_and_frontend_omits_unit_kerja_id(): void
     {
-        $user = new User();
-        $user->id = 99;
+        $user = User::forceCreate([
+            'id_user' => 99,
+            'email' => 'user99@example.test',
+            'user' => 'user99',
+            'password' => 'password',
+        ]);
         $this->actingAs($user, 'sanctum');
 
         $pegawai = Pegawai::create([

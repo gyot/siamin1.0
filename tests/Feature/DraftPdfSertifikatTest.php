@@ -25,7 +25,7 @@ class DraftPdfSertifikatTest extends TestCase
     private function login(): void
     {
         $user = new User();
-        $user->id = 99;
+        $user->id_user = 99;
         $this->actingAs($user, 'sanctum');
     }
 

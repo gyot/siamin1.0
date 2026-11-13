@@ -20,7 +20,7 @@ class AlurPengajuanSertifikatTest extends TestCase
     private function login()
     {
         $user = new User();
-        $user->id = 99;
+        $user->id_user = 99;
         $this->actingAs($user, 'sanctum');
 
         return $user;

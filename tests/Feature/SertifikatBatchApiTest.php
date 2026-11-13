@@ -15,7 +15,7 @@ class SertifikatBatchApiTest extends TestCase
     public function test_post_with_id_batch_updates_existing_sertifikat_instead_of_creating_a_new_record(): void
     {
         $user = new User();
-        $user->id = 99;
+        $user->id_user = 99;
         $this->actingAs($user, 'sanctum');
 
         $kegiatan = Kegiatan::create(['nama_kegiatan' => 'Workshop Sertifikat']);
