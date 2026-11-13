@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\KeanggotaanTim;
 use App\Models\Pegawai;
 use App\Models\UnitKerja;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +15,10 @@ class KegiatanApiTest extends TestCase
 
     public function test_store_kegiatan_auto_resolves_unit_kerja_id_from_keanggotaan_tim(): void
     {
+        $user = new User();
+        $user->id = 99;
+        $this->actingAs($user, 'sanctum');
+
         $pegawai = Pegawai::create([
             'nama' => 'Pegawai Test',
         ]);
@@ -35,6 +40,7 @@ class KegiatanApiTest extends TestCase
             'lokasi' => 'Mataram',
             'status' => 'draft',
             'id_pegawai' => $pegawai->id_pegawai,
+            'daftar_tpk' => [['lokasi' => 'Mataram']],
         ]);
 
         $response
@@ -50,6 +56,10 @@ class KegiatanApiTest extends TestCase
 
     public function test_store_kegiatan_returns_validation_error_when_pegawai_has_multiple_units_and_frontend_omits_unit_kerja_id(): void
     {
+        $user = new User();
+        $user->id = 99;
+        $this->actingAs($user, 'sanctum');
+
         $pegawai = Pegawai::create([
             'nama' => 'Pegawai Multi Unit',
         ]);
@@ -81,6 +91,7 @@ class KegiatanApiTest extends TestCase
             'lokasi' => 'Mataram',
             'status' => 'draft',
             'id_pegawai' => $pegawai->id_pegawai,
+            'daftar_tpk' => [['lokasi' => 'Mataram']],
         ]);
 
         $response

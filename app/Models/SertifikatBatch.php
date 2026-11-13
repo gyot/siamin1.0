@@ -21,10 +21,19 @@ class SertifikatBatch extends Model
         'tanggal_ttd',
         'template_file',
         'status',
+        'tanggal_diajukan',
+        'tanggal_persetujuan',
+        'tanggal_proses',
+        'pesan_revisi',
+        'alasan_penolakan',
+        'id_pengaju',
     ];
 
     protected $casts = [
         'tanggal_ttd' => 'date',
+        'tanggal_diajukan' => 'datetime',
+        'tanggal_persetujuan' => 'datetime',
+        'tanggal_proses' => 'datetime',
     ];
 
     public function kegiatan()

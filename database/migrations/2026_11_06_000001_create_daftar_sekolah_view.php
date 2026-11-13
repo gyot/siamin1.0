@@ -7,6 +7,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // View ini memakai sintaks MySQL (GROUP_CONCAT ... SEPARATOR) — dilewati untuk driver lain (uji SQLite).
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("
             CREATE OR REPLACE VIEW daftar_sekolah AS
             SELECT

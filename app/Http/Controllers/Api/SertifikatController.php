@@ -52,6 +52,12 @@ class SertifikatController extends Controller
         }
 
         try {
+            // Alur pengajuan: Simpan = Ajukan (nomor "draft", tanggal ttd otomatis hari ini).
+            $validated['nomor_sertifikat'] = 'draft';
+            $validated['status'] = 'diajukan';
+            $validated['tanggal_ttd'] = now()->toDateString();
+            $validated['tanggal_diajukan'] = now();
+            $validated['id_pengaju'] = $request->user()?->getAuthIdentifier();
             $batch = SertifikatBatch::create($validated)
                 ->load(['kegiatan', 'penandatangan']);
         } catch (\Throwable $e) {
@@ -71,6 +77,18 @@ class SertifikatController extends Controller
     private function updateExistingBatch(Request $request, array $validated, int $idBatch)
     {
         $batch = SertifikatBatch::findOrFail($idBatch);
+
+        // Kunci alur + simpan ulang = ajukan ulang (konsisten dengan SertifikatBatchController).
+        if (!in_array($batch->status, ['draft', 'revisi', 'ditolak'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batch berstatus "' . $batch->status . '" tidak dapat diubah. Menunggu hasil peninjauan atau proses nomor.',
+            ], 422);
+        }
+        $validated['nomor_sertifikat'] = 'draft';
+        $validated['status'] = 'diajukan';
+        $validated['tanggal_ttd'] = now()->toDateString();
+        $validated['tanggal_diajukan'] = now();
         $oldTemplateFile = $batch->template_file;
         $newTemplateFile = null;
         $deleteOldTemplateFile = false;
@@ -155,6 +173,19 @@ class SertifikatController extends Controller
         }
 
         $validated = $request->validated();
+
+        // Kunci alur + simpan ulang = ajukan ulang (konsisten dengan SertifikatBatchController).
+        if (!in_array($batch->status, ['draft', 'revisi', 'ditolak'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batch berstatus "' . $batch->status . '" tidak dapat diubah. Menunggu hasil peninjauan atau proses nomor.',
+            ], 422);
+        }
+        $validated['nomor_sertifikat'] = 'draft';
+        $validated['status'] = 'diajukan';
+        $validated['tanggal_ttd'] = now()->toDateString();
+        $validated['tanggal_diajukan'] = now();
+
         $oldTemplateFile = $batch->template_file;
         $newTemplateFile = null;
         $deleteOldTemplateFile = false;

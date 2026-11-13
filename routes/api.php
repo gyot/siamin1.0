@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\{
     TpkController,
     SertifikatController,
     SertifikatBatchController,
+    PengajuanSertifikatController,
     SertifikatPesertaController,
     AkunPesertaController,
     KeanggotaanTimController,
@@ -62,6 +63,19 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::get('peran', [PenugasanPegawaiController::class, 'peran']);
     Route::get('penugasan/ketua-panitia/{id_kegiatan}', [PenugasanPegawaiController::class, 'ketuaPanitia']);
     Route::post('sertifikat-batch/template-file', [SertifikatBatchController::class, 'downloadTemplateFile']);
+    // ALUR PENGAJUAN SERTIFIKAT (naskah) — wajib login.
+    // Didaftarkan SEBELUM apiResource('sertifikat-batch') agar "pengajuan"/"proses" tidak
+    // tertangkap route show {id} (urutan pendaftaran route menentukan).
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('sertifikat-batch/pengajuan', [PengajuanSertifikatController::class, 'pengajuan']);
+        Route::get('sertifikat-batch/proses', [PengajuanSertifikatController::class, 'prosesList']);
+        Route::post('sertifikat-batch/{id}/setujui', [PengajuanSertifikatController::class, 'setujui']);
+        Route::post('sertifikat-batch/{id}/revisi', [PengajuanSertifikatController::class, 'revisi']);
+        Route::post('sertifikat-batch/{id}/tolak', [PengajuanSertifikatController::class, 'tolak']);
+        Route::post('sertifikat-batch/{id}/proses', [PengajuanSertifikatController::class, 'proses']);
+        Route::post('sertifikat-batch/{id}/ajukan-ulang', [PengajuanSertifikatController::class, 'ajukanUlang']);
+    });
+
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['index', 'show']);
     Route::get('sertifikat/peserta/{id_peserta}', [SertifikatController::class, 'byPeserta']);
     Route::apiResource('sertifikat', SertifikatController::class)->only(['index', 'show']);

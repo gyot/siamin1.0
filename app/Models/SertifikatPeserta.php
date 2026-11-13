@@ -16,6 +16,7 @@ class SertifikatPeserta extends Model
         'id_peserta',
         'qr_token',
         'status',
+        'alasan_cabut',
     ];
 
     public function batch()

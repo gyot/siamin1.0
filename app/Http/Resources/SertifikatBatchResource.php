@@ -21,6 +21,12 @@ class SertifikatBatchResource extends JsonResource
                 ? Storage::disk('public')->url($this->template_file)
                 : null,
             'status' => $this->status,
+            'tanggal_diajukan' => $this->tanggal_diajukan,
+            'tanggal_persetujuan' => $this->tanggal_persetujuan,
+            'tanggal_proses' => $this->tanggal_proses,
+            'pesan_revisi' => $this->pesan_revisi,
+            'alasan_penolakan' => $this->alasan_penolakan,
+            'id_pengaju' => $this->id_pengaju,
             'kegiatan' => $this->whenLoaded('kegiatan'),
             'penandatangan' => $this->whenLoaded('penandatangan'),
             'struktur_program' => $this->whenLoaded('strukturProgram'),
