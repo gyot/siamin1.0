@@ -45,9 +45,6 @@ class AlurPengajuanSertifikatTest extends TestCase
 
         $response = $this->postJson('/api/v1/sertifikat-batch', [
             'id_kegiatan' => $kegiatan->id_kegiatan,
-            'nomor_sertifikat' => '999/DARI-KLIEN/2026',
-            'status' => 'terbit',
-            'tanggal_ttd' => '2020-01-01',
         ]);
 
         $response->assertStatus(201);

@@ -19,7 +19,7 @@ class StoreSertifikatBatchRequest extends FormRequest
             // Bila nilai ini dikirim, controller akan memperbarui batch tersebut.
             'id_batch' => ['sometimes', 'integer', 'exists:sertifikat_batch,id_batch'],
             'id_kegiatan' => ['required', 'exists:kegiatan,id_kegiatan'],
-            'nomor_sertifikat' => ['required', 'string', 'max:150'],
+            'nomor_sertifikat' => ['nullable', 'string', 'max:150'],
             'id_penandatangan' => ['nullable', 'exists:pegawai,id_pegawai'],
             'tanggal_ttd' => ['nullable', 'date'],
             'template_file' => ['nullable', 'file', 'mimes:doc,docx', 'max:10120'],
