@@ -133,17 +133,8 @@ class SertifikatController extends Controller
             ->where('id_peserta', $id)
             ->get();
 
-        if ($sertifikat->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sertifikat untuk peserta tidak ditemukan.',
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => SertifikatPesertaResource::collection($sertifikat),
-        ]);
+        // Sumber data generator file PDF (jalur publik) — ikut aturan status.
+        return $this->responsUnduhPublik($sertifikat);
     }
 
     public function showByUUID($id)
@@ -152,17 +143,7 @@ class SertifikatController extends Controller
             ->where('qr_token', $id)
             ->get();
 
-        if ($sertifikat->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sertifikat untuk peserta tidak ditemukan.',
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => SertifikatPesertaResource::collection($sertifikat),
-        ]);
+        return $this->responsUnduhPublik($sertifikat);
     }
 
     public function update(UpdateSertifikatBatchRequest $request, $id)
@@ -379,23 +360,44 @@ class SertifikatController extends Controller
                 ->where('id_peserta', $id_peserta)
                 ->get();
 
-            if ($sertifikat->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sertifikat untuk peserta tidak ditemukan.'
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => SertifikatPesertaResource::collection($sertifikat),
-            ]);
+            return $this->responsUnduhPublik($sertifikat);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Gerbang aturan status untuk semua jalur PUBLIK unduh sertifikat
+     * (byPeserta, showByUUID, dan show — sumber data generator file PDF):
+     * hanya sertifikat berstatus 'terbit' yang boleh dilayani.
+     * - status 'draft' atau belum ada baris sertifikat → 404 "Sertifikat belum tersedia"
+     * - status 'dicabut' → 410 "Sertifikat telah dicabut"
+     */
+    private function responsUnduhPublik($sertifikat)
+    {
+        $terbit = $sertifikat->filter(fn ($s) => $s->status === 'terbit')->values();
+
+        if ($terbit->isNotEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => SertifikatPesertaResource::collection($terbit),
+            ]);
+        }
+
+        if ($sertifikat->isNotEmpty() && $sertifikat->every(fn ($s) => $s->status === 'dicabut')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sertifikat telah dicabut',
+            ], 410);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Sertifikat belum tersedia',
+        ], 404);
     }
 
     private function ensurePesertaInBatchKegiatan(SertifikatBatch $batch, $pesertaIds, string $field = 'peserta_ids'): void
