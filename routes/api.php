@@ -26,7 +26,8 @@ use App\Http\Controllers\Api\{
     SubUnitKerjaController,
     TestController,
     KelasController,
-    LaporanController
+    LaporanController,
+    NotifikasiController
 };
 
 Route::prefix('v1')->group(function () {
@@ -163,6 +164,11 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::delete('kelas/{id_kelas}', [KelasController::class, 'destroy']);
         Route::post('kelas/{id_kelas}/anggota', [KelasController::class, 'addAnggota']);
         Route::delete('kelas/{id_kelas}/anggota/{id_peserta}', [KelasController::class, 'removeAnggota']);
+
+        // NOTIFIKASI LONCENG (20 terbaru + jumlah belum dibaca; tandai dibaca)
+        Route::get('notifikasi', [NotifikasiController::class, 'index']);
+        Route::post('notifikasi/baca-semua', [NotifikasiController::class, 'bacaSemua']);
+        Route::post('notifikasi/{id}/baca', [NotifikasiController::class, 'baca']);
 
         // LAPORAN
         Route::get('laporan/{id_kegiatan}/draft', [LaporanController::class, 'getDraft']);

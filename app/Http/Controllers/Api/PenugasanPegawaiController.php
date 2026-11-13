@@ -166,6 +166,13 @@ class PenugasanPegawaiController extends BaseApiController
 
         $item = PenugasanPegawai::create($validated);
 
+        // Notifikasi lonceng ke user milik pegawai yang ditugaskan (hubungan users.id_pegawai).
+        try {
+            \App\Services\NotifikasiService::penugasan($item, 'baru');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Penugasan] Gagal membuat notifikasi: ' . $e->getMessage());
+        }
+
         // Kirim push notification ke pegawai yang ditambahkan
         try {
             $kegiatan = \App\Models\Kegiatan::find($validated['id_kegiatan']);
@@ -215,6 +222,7 @@ class PenugasanPegawaiController extends BaseApiController
 
         $kegiatanId = $validated['id_kegiatan'] ?? $item->id_kegiatan;
         $pegawaiId = $validated['id_pegawai'] ?? $item->id_pegawai;
+        $idPegawaiLama = (int) $item->id_pegawai;
 
         if ($this->hasDuplicateAssignment($kegiatanId, $pegawaiId, $item->id)) {
             return response()->json([
@@ -225,10 +233,38 @@ class PenugasanPegawaiController extends BaseApiController
 
         $item->update($validated);
 
+        // Notifikasi lonceng ke user milik pegawai terkait (juga pemegang lama bila dialihkan).
+        try {
+            $aksi = $idPegawaiLama !== (int) $item->id_pegawai ? 'dialihkan' : 'diperbarui';
+            \App\Services\NotifikasiService::penugasan($item, $aksi, $idPegawaiLama);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Penugasan] Gagal membuat notifikasi: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'data' => $this->loadResource($item),
         ]);
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $item = PenugasanPegawai::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Not found'], 404);
+        }
+
+        $item->delete();
+
+        // Notifikasi lonceng ke user milik pegawai yang penugasannya dicabut.
+        try {
+            \App\Services\NotifikasiService::penugasan($item, 'dihapus');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Penugasan] Gagal membuat notifikasi: ' . $e->getMessage());
+        }
+
+        return response()->json(['success' => true, 'message' => 'Deleted']);
     }
 
     protected function storeRules(): array

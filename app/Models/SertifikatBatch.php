@@ -36,6 +36,21 @@ class SertifikatBatch extends Model
         'tanggal_proses' => 'datetime',
     ];
 
+    /**
+     * Pemicu notifikasi lonceng untuk SEMUA jalur mutasi batch (SertifikatController,
+     * SertifikatBatchController, ajukan-ulang) — logika dibagikan di satu titik
+     * karena update batch punya banyak pintu masuk yang saling membypass.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (SertifikatBatch $batch) {
+            if (!$batch->wasRecentlyCreated && !$batch->wasChanged('status')) {
+                return;
+            }
+            \App\Services\NotifikasiService::dariStatusNaskah($batch);
+        });
+    }
+
     public function kegiatan()
     {
         return $this->belongsTo(Kegiatan::class, 'id_kegiatan', 'id_kegiatan');
