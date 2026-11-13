@@ -54,11 +54,18 @@ class EvaluasiController extends Controller
     
     public function store(Request $request)
     {
-        $recentSubmissionCount = $this->countRecentSubmissionsByIp($request->ip());
+        $ipAddress = $request->ip();
+        $idKegiatan = $request->input('id_kegiatan');
 
-        if ($recentSubmissionCount >= 3) {
+        // Batas per (IP + kegiatan): peserta berbeda yang berbagi jaringan (CGNAT/WiFi
+        // acara) tidak saling menghalangi, tetapi spam pada satu kegiatan tetap tertahan.
+        $recentPerKegiatan = blank($idKegiatan) ? 0 : $this->countRecentSubmissions($ipAddress, $idKegiatan);
+        $recentGlobal = $this->countRecentSubmissions($ipAddress);
+
+        if ($recentPerKegiatan >= 10 || $recentGlobal >= 60) {
             $retryAt = Evaluasi::query()
-                ->where('ip_address', $request->ip())
+                ->where('ip_address', $ipAddress)
+                ->when($recentPerKegiatan >= 10, fn ($query) => $query->where('id_kegiatan', $idKegiatan))
                 ->where('created_at', '>=', now()->subHour())
                 ->orderBy('created_at')
                 ->value('created_at');
@@ -398,7 +405,7 @@ class EvaluasiController extends Controller
         return round($scores->avg(), $precision);
     }
 
-    private function countRecentSubmissionsByIp(?string $ipAddress): int
+    private function countRecentSubmissions(?string $ipAddress, $idKegiatan = null): int
     {
         if (blank($ipAddress)) {
             return 0;
@@ -406,6 +413,7 @@ class EvaluasiController extends Controller
 
         return Evaluasi::query()
             ->where('ip_address', $ipAddress)
+            ->when($idKegiatan !== null, fn ($query) => $query->where('id_kegiatan', $idKegiatan))
             ->where('created_at', '>=', now()->subHour())
             ->count();
     }
