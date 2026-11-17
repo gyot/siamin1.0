@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Kegiatan;
 use App\Models\SertifikatBatch;
 use App\Models\User;
+use App\Models\UserAksesMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,6 +17,8 @@ class SertifikatBatchApiTest extends TestCase
     {
         $user = new User();
         $user->id_user = 99;
+        // Mutasi batch = menu proses-sertifikat (lihat peta route di routes/api.php).
+        UserAksesMenu::forceCreate(['id_user' => 99, 'menu' => 'proses-sertifikat']);
         $this->actingAs($user, 'sanctum');
 
         $kegiatan = Kegiatan::create(['nama_kegiatan' => 'Workshop Sertifikat']);

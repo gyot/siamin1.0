@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->redirectGuestsTo(fn () => null)
             ->append(HandleCors::class);
 
+        // Proteksi API per menu (AksesMenu:kunci-menu) — lihat App\Support\HakAkses.
+        $middleware->alias([
+            'AksesMenu' => \App\Http\Middleware\AksesMenu::class,
+        ]);
+
         // The API primarily uses Bearer tokens. Keep Sanctum's cookie/session
         // middleware opt-in so parallel frontend requests do not pay the
         // overhead of stateful SPA authentication unless explicitly needed.

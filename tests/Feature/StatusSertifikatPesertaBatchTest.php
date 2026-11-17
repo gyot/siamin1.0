@@ -9,6 +9,7 @@ use App\Models\RiwayatSertifikat;
 use App\Models\SertifikatBatch;
 use App\Models\SertifikatPeserta;
 use App\Models\User;
+use App\Models\UserAksesMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -27,6 +28,8 @@ class StatusSertifikatPesertaBatchTest extends TestCase
     {
         $user = new User();
         $user->id_user = 99;
+        // Status peserta batch = menu proses-sertifikat (lihat peta route di routes/api.php).
+        UserAksesMenu::forceCreate(['id_user' => 99, 'menu' => 'proses-sertifikat']);
         $this->actingAs($user, 'sanctum');
 
         return $user;

@@ -6,6 +6,7 @@ use App\Models\Kegiatan;
 use App\Models\RiwayatSertifikat;
 use App\Models\SertifikatBatch;
 use App\Models\User;
+use App\Models\UserAksesMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,6 +22,9 @@ class AlurPengajuanSertifikatTest extends TestCase
     {
         $user = new User();
         $user->id_user = 99;
+        // Alur ini menyentuh meja telaah + persuratan sertifikat.
+        UserAksesMenu::forceCreate(['id_user' => 99, 'menu' => 'pengajuan-sertifikat']);
+        UserAksesMenu::forceCreate(['id_user' => 99, 'menu' => 'proses-sertifikat']);
         $this->actingAs($user, 'sanctum');
 
         return $user;

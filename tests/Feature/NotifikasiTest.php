@@ -8,6 +8,7 @@ use App\Models\Pegawai;
 use App\Models\PenugasanPegawai;
 use App\Models\SertifikatBatch;
 use App\Models\User;
+use App\Models\UserAksesMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -29,13 +30,23 @@ class NotifikasiTest extends TestCase
         self::$nomorUser++;
         $nama = 'user' . self::$nomorUser;
 
-        return User::forceCreate(array_merge([
+        $user = User::forceCreate(array_merge([
             'email' => $nama . '@contoh.test',
             'user' => $nama,
             'password' => 'rahasia',
             'role' => 'operator',
             'status' => 'aktif',
         ], $overrides));
+
+        // Pemicu notifikasi diuji lewat endpoint sertifikat-batch (menu
+        // pengajuan-sertifikat & proses-sertifikat) dan penugasan-pegawai
+        // (menu penugasan). Konfigurasi eksplisit MENGGANTIKAN menu default,
+        // jadi ketiganya diberikan di sini.
+        foreach (['pengajuan-sertifikat', 'proses-sertifikat', 'penugasan'] as $menu) {
+            UserAksesMenu::forceCreate(['id_user' => $user->id_user, 'menu' => $menu]);
+        }
+
+        return $user;
     }
 
     private function buatBatch(array $overrides = []): SertifikatBatch

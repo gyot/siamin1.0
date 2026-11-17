@@ -27,7 +27,8 @@ use App\Http\Controllers\Api\{
     TestController,
     KelasController,
     LaporanController,
-    NotifikasiController
+    NotifikasiController,
+    HakAksesController
 };
 
 Route::prefix('v1')->group(function () {
@@ -47,7 +48,7 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     Route::get('kegiatan/all', [KegiatanController::class, 'getAllKegiatan']);
     Route::get('kegiatan/tim/{id}', [KegiatanController::class, 'getAllKegiatanTim']);
     Route::get('kegiatan/tim_kegiatan/{id}', [KegiatanController::class, 'getAllKegiatanTimKegiatan']);
-    Route::get('kegiatan/tim-saya', [KegiatanController::class, 'getKegiatanTimSaya'])->middleware('auth:sanctum');
+    Route::get('kegiatan/tim-saya', [KegiatanController::class, 'getKegiatanTimSaya'])->middleware('auth:sanctum', 'AksesMenu:kegiatan');
     Route::apiResource('kegiatan', KegiatanController::class)->only(['index', 'show']);
     Route::get('kegiatan/{id}/peserta-sertifikat', [SertifikatPesertaController::class, 'pesertaByKegiatan']);
     Route::get('kegiatan/{id}/sertifikat-batch', [SertifikatBatchController::class, 'byKegiatan']);
@@ -72,17 +73,23 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
     // Didaftarkan SEBELUM apiResource('sertifikat-batch') agar "pengajuan"/"proses" tidak
     // tertangkap route show {id} (urutan pendaftaran route menentukan).
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('sertifikat-batch/pengajuan', [PengajuanSertifikatController::class, 'pengajuan']);
-        Route::get('sertifikat-batch/proses', [PengajuanSertifikatController::class, 'prosesList']);
-        Route::post('sertifikat-batch/{id}/setujui', [PengajuanSertifikatController::class, 'setujui']);
-        Route::post('sertifikat-batch/{id}/revisi', [PengajuanSertifikatController::class, 'revisi']);
-        Route::post('sertifikat-batch/{id}/tolak', [PengajuanSertifikatController::class, 'tolak']);
-        Route::post('sertifikat-batch/{id}/proses', [PengajuanSertifikatController::class, 'proses']);
-        Route::post('sertifikat-batch/{id}/ajukan-ulang', [PengajuanSertifikatController::class, 'ajukanUlang']);
-        // Level 2: status sertifikat PER PESERTA pada satu batch (lihat SertifikatController).
-        Route::get('sertifikat-batch/{id}/peserta-status', [SertifikatController::class, 'pesertaStatus']);
-        Route::patch('sertifikat-batch/{id}/status-peserta', [SertifikatController::class, 'ubahStatusPesertaBatch']);
-        Route::post('sertifikat-batch/{id}/terbitkan', [SertifikatController::class, 'terbitkanPeserta']);
+        // Meja telaah (menu: pengajuan-sertifikat) — lihat UI map menu Pengajuan Sertifikat.
+        Route::middleware('AksesMenu:pengajuan-sertifikat')->group(function () {
+            Route::get('sertifikat-batch/pengajuan', [PengajuanSertifikatController::class, 'pengajuan']);
+            Route::post('sertifikat-batch/{id}/setujui', [PengajuanSertifikatController::class, 'setujui']);
+            Route::post('sertifikat-batch/{id}/revisi', [PengajuanSertifikatController::class, 'revisi']);
+            Route::post('sertifikat-batch/{id}/tolak', [PengajuanSertifikatController::class, 'tolak']);
+            Route::post('sertifikat-batch/{id}/ajukan-ulang', [PengajuanSertifikatController::class, 'ajukanUlang']);
+        });
+        // Meja persuratan + status per peserta (menu: proses-sertifikat).
+        Route::middleware('AksesMenu:proses-sertifikat')->group(function () {
+            Route::get('sertifikat-batch/proses', [PengajuanSertifikatController::class, 'prosesList']);
+            Route::post('sertifikat-batch/{id}/proses', [PengajuanSertifikatController::class, 'proses']);
+            // Level 2: status sertifikat PER PESERTA pada satu batch (lihat SertifikatController).
+            Route::get('sertifikat-batch/{id}/peserta-status', [SertifikatController::class, 'pesertaStatus']);
+            Route::patch('sertifikat-batch/{id}/status-peserta', [SertifikatController::class, 'ubahStatusPesertaBatch']);
+            Route::post('sertifikat-batch/{id}/terbitkan', [SertifikatController::class, 'terbitkanPeserta']);
+        });
     });
 
     Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['index', 'show']);
@@ -101,60 +108,107 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
 
     Route::get('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'getJadwal']);
 
-    // PROTECTED
+    // PROTECTED — wajib login, lalu proteksi per menu (AksesMenu:kunci-menu).
+    // Peta route -> kunci menu (registry: App\Support\HakAkses::MENU_KEYS):
+    //   kegiatan            : kegiatan (mutasi), kegiatan-atk, tpk  [+ kegiatan/tim-saya di atas]
+    //   pengajuan-sertifikat: sertifikat-batch/pengajuan, setujui, revisi, tolak, ajukan-ulang
+    //   proses-sertifikat   : sertifikat-batch/proses, {id}/proses, peserta-status,
+    //                         status-peserta, terbitkan, CRUD sertifikat-batch & sertifikat
+    //                         (dua pintu mutasi batch), generate*, sertifikat-peserta
+    //   pegawai-user        : users, pegawai
+    //   daftar-sekolah      : sekolah
+    //   daftar-peserta      : peserta (mutasi), peserta-all
+    //   penugasan           : penugasan-pegawai
+    //   paket-soal          : test/paket*, test/soal* (admin)
+    //   laporan-kegiatan    : laporan/{id}/draft, laporan/{id}/jadwal (mutasi)
+    //   api-token           : api-tokens
+    //   hak-akses           : daftar & ubah hak akses (khusus super admin di controller)
+    //   dashboard           : GET dashboard/stats tetap PUBLIK (tidak disentuh) sehingga
+    //                         kunci 'dashboard' belum menempel route mana pun (menu saja)
+    // Route auth TANPA kunci menu tetap untuk semua user login (me, logout, notifikasi,
+    // kelas, unit-kerja, log-aktivitas, integrasi, dll).
     Route::middleware('auth:sanctum')->group(function () {
-        Route::apiResource('users', UserController::class)->only(['index', 'show']);
-        Route::apiResource('pegawai', PegawaiController::class)->only(['index', 'show']);
-        // Route::apiResource('peserta', PesertaController::class);
 
-        // MUTASI DATA (create/update/delete wajib login)
-        Route::apiResource('kegiatan', KegiatanController::class)->only(['store', 'update', 'destroy']);
-        Route::apiResource('peserta', PesertaController::class)->only(['store', 'update', 'destroy']);
+        // HAK AKSES MENU (user privilege) — /saya untuk semua user login.
+        Route::get('hak-akses/saya', [HakAksesController::class, 'saya']);
+        Route::middleware('AksesMenu:hak-akses')->group(function () {
+            Route::get('hak-akses', [HakAksesController::class, 'index']);
+            Route::put('hak-akses/{id_user}', [HakAksesController::class, 'update']);
+        });
+
+        // MENU: pegawai-user
+        Route::middleware('AksesMenu:pegawai-user')->group(function () {
+            Route::apiResource('users', UserController::class)->only(['index', 'show']);
+            Route::apiResource('pegawai', PegawaiController::class)->only(['index', 'show']);
+        });
+
+        // MENU: kegiatan (mutasi)
+        Route::middleware('AksesMenu:kegiatan')->group(function () {
+            Route::apiResource('kegiatan', KegiatanController::class)->only(['store', 'update', 'destroy']);
+            Route::apiResource('kegiatan-atk', KegiatanAtkController::class)->only(['store', 'update', 'destroy']);
+            Route::apiResource('tpk', TpkController::class)->only(['store', 'update', 'destroy']);
+        });
+
+        // MENU: daftar-peserta (peserta admin)
+        Route::middleware('AksesMenu:daftar-peserta')->group(function () {
+            Route::apiResource('peserta', PesertaController::class)->only(['store', 'update', 'destroy']);
+            Route::get('peserta-all', [PesertaController::class, 'all']);
+        });
+
+        // MENU: daftar-sekolah
+        Route::middleware('AksesMenu:daftar-sekolah')->group(function () {
+            Route::get('sekolah', [SekolahController::class, 'index']);
+        });
+
+        // MENU: penugasan
+        Route::middleware('AksesMenu:penugasan')->group(function () {
+            Route::apiResource('penugasan-pegawai', PenugasanPegawaiController::class);
+            Route::get('penugasan-pegawai-detailed', [PenugasanPegawaiController::class, 'indexWithDetails']);
+        });
+
+        // MENU: paket-soal (CRUD paket & soal admin)
+        Route::middleware('AksesMenu:paket-soal')->group(function () {
+            Route::get('test/paket-all', [TestController::class, 'indexPaket']);
+            Route::post('test/paket', [TestController::class, 'storePaket']);
+            Route::get('test/paket-manage/{id_paket_soal}', [TestController::class, 'showPaket']);
+            Route::put('test/paket/{id_paket_soal}', [TestController::class, 'updatePaket']);
+            Route::delete('test/paket/{id_paket_soal}', [TestController::class, 'destroyPaket']);
+            Route::get('test/paket/{id_paket_soal}/soal', [TestController::class, 'indexSoal']);
+            Route::post('test/paket/{id_paket_soal}/soal', [TestController::class, 'storeSoal']);
+            Route::post('test/paket/{id_paket_soal}/import', [TestController::class, 'importSoal']);
+            Route::put('test/paket/{id_paket_soal}/soal-replace', [TestController::class, 'replaceSoal']);
+            Route::put('test/soal/{id_soal}', [TestController::class, 'updateSoal']);
+            Route::delete('test/soal/{id_soal}', [TestController::class, 'destroySoal']);
+        });
+
+        // MENU: proses-sertifikat (mutasi batch lewat DUA pintu: sertifikat-batch & sertifikat —
+        // keduanya wajib satu kunci agar tidak bisa dipukul rata lewat pintu satunya).
+        // PATCH sertifikat/update-status didaftarkan SEBELUM apiResource('sertifikat')
+        // (update route menerima PATCH sertifikat/{id} yang akan menelannya).
+        Route::middleware('AksesMenu:proses-sertifikat')->group(function () {
+            Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['store', 'update', 'destroy']);
+            Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
+            Route::apiResource('sertifikat', SertifikatController::class)->only(['store', 'update', 'destroy']);
+            Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
+            Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
+            Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
+            Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
+        });
+
+        // TANPA kunci menu — tetap untuk semua user login.
         // API integrasi untuk aplikasi lain (Bearer token)
         Route::get('integrasi/peserta', [IntegrasiPesertaController::class, 'index']);
         Route::get('integrasi/peserta/{id}', [IntegrasiPesertaController::class, 'show']);
-        Route::get('sekolah', [SekolahController::class, 'index']);
-        Route::get('peserta-all', [PesertaController::class, 'all']);
-        // Manajemen API token (admin only)
-        Route::get('api-tokens', [ApiTokenController::class, 'index']);
-        Route::post('api-tokens', [ApiTokenController::class, 'store']);
-        Route::delete('api-tokens/{id}', [ApiTokenController::class, 'destroy']);
-        Route::apiResource('kegiatan-atk', KegiatanAtkController::class)->only(['store', 'update', 'destroy']);
-        Route::apiResource('tpk', TpkController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('unit-kerja', UnitKerjaController::class)->only(['store', 'update', 'destroy']);
-        Route::apiResource('sertifikat-batch', SertifikatBatchController::class)->only(['store', 'update', 'destroy']);
-        Route::patch('sertifikat/update-status', [SertifikatController::class, 'updateStatusByPeserta']);
-        Route::apiResource('sertifikat', SertifikatController::class)->only(['store', 'update', 'destroy']);
-        Route::post('sertifikat/generate', [SertifikatController::class, 'generate']);
-        Route::post('sertifikat/generate-massal', [SertifikatController::class, 'generateMassal']);
-        Route::patch('sertifikat-peserta/{id}/status', [SertifikatController::class, 'updatePesertaStatus']);
-        Route::delete('sertifikat-peserta/{id}', [SertifikatController::class, 'destroyPeserta']);
         Route::apiResource('akun-peserta', AkunPesertaController::class);
         Route::apiResource('keanggotaan-tim', KeanggotaanTimController::class);
         Route::apiResource('log-aktivitas', LogAktivitasController::class);
-        Route::apiResource('penugasan-pegawai', PenugasanPegawaiController::class);
-        Route::get('penugasan-pegawai-detailed', [PenugasanPegawaiController::class, 'indexWithDetails']);
         Route::apiResource('sub-unit-kerja', SubUnitKerjaController::class);
         Route::get('evaluasi/{id_kegiatan}/{id_tpk?}', [EvaluasiController::class, 'indexByKegiatan']);
 
         // TEST LAPORAN (admin)
         Route::get('test/laporan/{id_kegiatan}', [TestController::class, 'laporanByKegiatan']);
         Route::get('test/laporan/{id_kegiatan}/{id_peserta}/{id_paket_soal}', [TestController::class, 'laporanDetail']);
-
-        // CRUD PAKET SOAL (admin)
-        Route::get('test/paket-all', [TestController::class, 'indexPaket']);
-        Route::post('test/paket', [TestController::class, 'storePaket']);
-        Route::get('test/paket-manage/{id_paket_soal}', [TestController::class, 'showPaket']);
-        Route::put('test/paket/{id_paket_soal}', [TestController::class, 'updatePaket']);
-        Route::delete('test/paket/{id_paket_soal}', [TestController::class, 'destroyPaket']);
-
-        // CRUD SOAL (admin)
-        Route::get('test/paket/{id_paket_soal}/soal', [TestController::class, 'indexSoal']);
-        Route::post('test/paket/{id_paket_soal}/soal', [TestController::class, 'storeSoal']);
-        Route::post('test/paket/{id_paket_soal}/import', [TestController::class, 'importSoal']);
-        Route::put('test/paket/{id_paket_soal}/soal-replace', [TestController::class, 'replaceSoal']);
-        Route::put('test/soal/{id_soal}', [TestController::class, 'updateSoal']);
-        Route::delete('test/soal/{id_soal}', [TestController::class, 'destroySoal']);
 
         // KELAS
         Route::get('kelas/{id_kegiatan}', [KelasController::class, 'index']);
@@ -170,10 +224,19 @@ Route::get('/evaluasi/random-fasilitator', [EvaluasiController::class, 'randomFa
         Route::post('notifikasi/baca-semua', [NotifikasiController::class, 'bacaSemua']);
         Route::post('notifikasi/{id}/baca', [NotifikasiController::class, 'baca']);
 
-        // LAPORAN
-        Route::get('laporan/{id_kegiatan}/draft', [LaporanController::class, 'getDraft']);
-        Route::post('laporan/{id_kegiatan}/draft', [LaporanController::class, 'saveDraft']);
-        Route::post('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'saveJadwal']);
+        // LAPORAN (menu: laporan-kegiatan)
+        Route::middleware('AksesMenu:laporan-kegiatan')->group(function () {
+            Route::get('laporan/{id_kegiatan}/draft', [LaporanController::class, 'getDraft']);
+            Route::post('laporan/{id_kegiatan}/draft', [LaporanController::class, 'saveDraft']);
+            Route::post('laporan/{id_kegiatan}/jadwal', [LaporanController::class, 'saveJadwal']);
+        });
+
+        // MANAJEMEN API TOKEN (menu: api-token)
+        Route::middleware('AksesMenu:api-token')->group(function () {
+            Route::get('api-tokens', [ApiTokenController::class, 'index']);
+            Route::post('api-tokens', [ApiTokenController::class, 'store']);
+            Route::delete('api-tokens/{id}', [ApiTokenController::class, 'destroy']);
+        });
 
         // PUSH NOTIFICATIONS
         Route::post('push/register', [\App\Http\Controllers\Api\PushNotificationController::class, 'registerToken']);
