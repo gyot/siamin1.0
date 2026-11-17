@@ -25,7 +25,7 @@ class UpdateSertifikatBatchRequest extends FormRequest
             'struktur_program.*.materi' => ['required_with:struktur_program', 'string', 'max:255'],
             'struktur_program.*.jumlah_jam' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'struktur_program.*.urutan' => ['sometimes', 'nullable', 'integer'],
-            'status' => ['sometimes', Rule::in(['draft', 'terbit', 'dicabut'])],
+            'status' => ['sometimes', Rule::in(['draft', 'terbit', 'dicabut', 'diajukan', 'disetujui', 'revisi', 'ditolak'])],
         ];
     }
 }
